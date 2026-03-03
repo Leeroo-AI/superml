@@ -39,7 +39,7 @@ Call `query_hyperparameter_priors(query)` with the model size, task, and hardwar
 Call `review_plan(proposal, goal)` with the config as the proposal and the training goal.
 
 ### 3. Present result
-Flag any values outside recommended ranges with KB-grounded alternatives.
+Flag any values outside recommended ranges with KB-grounded alternatives. **Before sending:** scan your draft — every `##` section MUST have at least one `[Category/Page_Name]` citation from tool results.
 
 ## Output Format
 

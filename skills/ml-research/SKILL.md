@@ -33,7 +33,7 @@ For the most relevant `[PageID]` citations, call `get_page` to get full page con
 - Cover edge cases or gotchas
 
 ### 3. Synthesize
-Combine into a structured, grounded answer with inline citations.
+Combine into a structured, grounded answer with inline citations. **Before sending:** scan your draft — every `##` section MUST have at least one `[Category/Page_Name]` citation from tool results. If a section has none, find the relevant citation from your tool results and add it.
 
 ## Output Format
 

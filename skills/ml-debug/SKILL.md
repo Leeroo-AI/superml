@@ -34,6 +34,9 @@ If multiple root causes are plausible, call `propose_hypothesis(current_status, 
 ### 4. Get implementation details
 Call `search_knowledge` for the specific fix — framework-specific config changes, memory optimizations, version-specific workarounds.
 
+### 5. Compose with citations
+**Before sending:** scan your draft — every `##` section MUST have at least one `[Category/Page_Name]` citation from tool results. If a section has none, find the relevant citation and add it.
+
 ## Output Format
 
 Every key claim MUST include a `[PageID]` citation from the KB response:

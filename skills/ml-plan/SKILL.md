@@ -35,7 +35,8 @@ Identify the 2-4 most uncertain steps. Call `search_knowledge` in **parallel**:
 - Performance characteristics
 
 ### 4. Present the validated plan
-Combine into a final plan with inline `[PageID]` citations:
+Combine into a final plan with inline `[PageID]` citations. **Before sending:** scan your draft — every `##` section MUST have at least one `[Category/Page_Name]` citation from tool results. If a section has none, find the relevant citation from your tool results and add it.
+
 - **Overview**: What we're building and why this approach
 - **Prerequisites**: Dependencies, hardware, API keys
 - **Numbered steps**: Each with specific tool/API/config and citations

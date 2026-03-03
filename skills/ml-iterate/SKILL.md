@@ -33,7 +33,7 @@ For the top 2-3 ranked hypotheses, call `search_knowledge` in **parallel** to ge
 If any hypothesis involves tuning, call `query_hyperparameter_priors` for recommended ranges given the user's context.
 
 ### 4. Present ranked alternatives
-Combine into an actionable iteration plan.
+Combine into an actionable iteration plan. **Before sending:** scan your draft — every `##` section MUST have at least one `[Category/Page_Name]` citation from tool results. If a section has none, find the relevant citation and add it.
 
 ## Output Format
 
