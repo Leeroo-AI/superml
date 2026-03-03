@@ -1,0 +1,16 @@
+{
+  "name": "leeroopedia",
+  "description": "ML/AI knowledge base plugin for Claude Code",
+  "owner": {
+    "name": "Leeroo AI",
+    "email": "hello@leeroopedia.com"
+  },
+  "plugins": [
+    {
+      "name": "leeroopedia",
+      "description": "ML/AI knowledge base plugin: grounded answers from 27,667 pages across 1000+ frameworks",
+      "version": "1.0.0",
+      "source": "./"
+    }
+  ]
+}

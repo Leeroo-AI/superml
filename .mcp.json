@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "leeroopedia": {
+      "command": "uvx",
+      "args": [
+        "leeroopedia-mcp"
+      ],
+      "env": {
+        "LEEROOPEDIA_API_KEY": "${LEEROOPEDIA_API_KEY}"
+      }
+    }
+  }
+}

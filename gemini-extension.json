@@ -1,0 +1,11 @@
+{
+    "name": "leeroopedia",
+    "description": "ML/AI knowledge base: grounded answers from 27,667 pages across 1000+ frameworks",
+    "version": "1.0.0",
+    "contextFileName": "agents/AGENTS.md",
+    "mcpServers": {
+        "leeroopedia": {
+            "httpUrl": "https://mcp.leeroopedia.com/mcp"
+        }
+    }
+}

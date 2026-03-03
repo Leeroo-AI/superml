@@ -1,0 +1,5 @@
+# Preserve Unix line endings for hook scripts
+hooks/session-start text eol=lf
+hooks/run-hook.cmd text eol=lf
+scripts/*.sh text eol=lf
+scripts/*.py text eol=lf

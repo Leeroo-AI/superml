@@ -1,0 +1,6 @@
+.worktrees/
+.claude/
+.DS_Store
+__pycache__/
+node_modules/
+test-logs/
