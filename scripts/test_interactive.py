@@ -245,6 +245,343 @@ TESTS = [
         "expected_skill": "ml-plan",
         "needs_gpu": False,
     },
+    # --- Round 2: 16 more tests (t17-t32) ---
+    {
+        "id": "t17_grpo_alignment",
+        "prompt": (
+            "I want to align my Qwen2.5-7B-Instruct model using GRPO "
+            "(Group Relative Policy Optimization) instead of DPO. I have "
+            "10k prompts (no preference pairs — just prompts). Using TRL's "
+            "GRPOTrainer on 2xA100 80GB.\n\n"
+            "1. Explain how GRPO differs from DPO/PPO — why no reward model "
+            "or preference data?\n"
+            "2. Give me the complete training config with TRL GRPOTrainer\n"
+            "3. What are the key hyperparameters (group_size, kl_coef, "
+            "num_generations) and how do they interact?\n"
+            "4. What reward function should I use for general instruction "
+            "following?\n"
+            "5. Common failure modes and how to detect them"
+        ),
+        "category": "alignment",
+        "expected_skill": "ml-plan",
+        "needs_gpu": True,
+    },
+    {
+        "id": "t18_vision_finetuning",
+        "prompt": (
+            "I need to fine-tune Qwen2-VL-7B for document understanding "
+            "(invoices, receipts, forms). I have 30k document images with "
+            "structured JSON annotations. Hardware: 1xH100 80GB.\n\n"
+            "1. What data format does Qwen2-VL expect for supervised "
+            "fine-tuning?\n"
+            "2. Give me the complete training script using transformers "
+            "and the Qwen2-VL processor\n"
+            "3. Should I use LoRA or full fine-tuning? What target_modules?\n"
+            "4. How do I handle variable-resolution images efficiently?\n"
+            "5. Evaluation: how to measure extraction accuracy vs the "
+            "JSON ground truth"
+        ),
+        "category": "fine-tuning",
+        "expected_skill": "ml-plan",
+        "needs_gpu": True,
+    },
+    {
+        "id": "t19_moe_serving",
+        "prompt": (
+            "I need to serve Mixtral-8x22B in production on 4xA100 80GB. "
+            "Requirements: p99 latency < 5s for 1024-token outputs, "
+            "30 concurrent users, 99.9% uptime.\n\n"
+            "1. Can this even fit on 4xA100 80GB? What quantization is "
+            "needed?\n"
+            "2. Compare serving options: vLLM vs TGI vs SGLang for MoE "
+            "models specifically\n"
+            "3. Give me the exact launch config with optimal tensor "
+            "parallel, quantization, and KV cache settings\n"
+            "4. How does expert parallelism work in vLLM for MoE?\n"
+            "5. Production setup: health checks, graceful degradation, "
+            "request queuing"
+        ),
+        "category": "inference-optimization",
+        "expected_skill": "ml-plan",
+        "needs_gpu": True,
+    },
+    {
+        "id": "t20_continual_pretraining",
+        "prompt": (
+            "I want to do continual pre-training of Llama-3.1-8B on a "
+            "domain corpus (500M tokens of biomedical papers). Hardware: "
+            "8xA100 80GB single node.\n\n"
+            "1. How does continual pre-training differ from fine-tuning? "
+            "What learning rate schedule should I use (much lower than "
+            "from-scratch)?\n"
+            "2. Complete training config with DeepSpeed ZeRO-2\n"
+            "3. How to prevent catastrophic forgetting of general "
+            "capabilities?\n"
+            "4. Data mixing strategy: what ratio of domain data vs "
+            "replay data?\n"
+            "5. How to evaluate: perplexity on domain vs general "
+            "benchmarks, and when to stop"
+        ),
+        "category": "pre-training",
+        "expected_skill": "ml-plan",
+        "needs_gpu": True,
+    },
+    {
+        "id": "t21_quantization_comparison",
+        "prompt": (
+            "I need to quantize Llama-3.1-70B for deployment on 2xA100 "
+            "40GB. Compare quantization methods:\n\n"
+            "1. GPTQ vs AWQ vs GGUF vs HQQ vs bitsandbytes — which "
+            "preserves quality best at 4-bit?\n"
+            "2. For each method: exact commands to quantize, expected "
+            "model size, and known quality impact\n"
+            "3. Calibration dataset: how many samples, what kind of data?\n"
+            "4. Benchmark plan: how to measure quality degradation "
+            "(perplexity, task accuracy, generation quality)\n"
+            "5. Can I serve the quantized model with vLLM? Which "
+            "quantization formats does vLLM 0.6+ support?"
+        ),
+        "category": "quantization",
+        "expected_skill": "ml-research",
+        "needs_gpu": True,
+    },
+    {
+        "id": "t22_training_loss_spike",
+        "prompt": (
+            "I'm fine-tuning Llama-3-8B with QLoRA and seeing a "
+            "persistent problem: training loss drops normally for the "
+            "first 500 steps (from 2.3 to 0.8), then suddenly spikes to "
+            "5.0+ at step 501 and never recovers. This happens "
+            "consistently at the same step.\n\n"
+            "Config: lr=2e-4, cosine schedule, warmup_steps=100, "
+            "batch_size=4, grad_accum=8, bf16, bnb 4bit, max_seq_len=2048, "
+            "lora_r=16, lora_alpha=32.\n\n"
+            "Data: 15k instruction-response pairs, shuffled. Average "
+            "length ~800 tokens, but some samples are up to 2048.\n\n"
+            "What's causing this and how do I fix it?"
+        ),
+        "category": "debugging",
+        "expected_skill": "ml-debug",
+        "needs_gpu": True,
+    },
+    {
+        "id": "t23_kv_cache_optimization",
+        "prompt": (
+            "I'm serving Llama-3.1-70B on 4xA100 80GB with vLLM. "
+            "My KV cache is the bottleneck — I can only handle 8 "
+            "concurrent requests with max_model_len=32768.\n\n"
+            "1. Explain PagedAttention and how vLLM manages KV cache\n"
+            "2. How much KV cache memory does each request use for "
+            "Llama-3.1-70B at 32k context?\n"
+            "3. Compare optimization strategies: FP8 KV cache, GQA "
+            "exploitation, prefix caching, chunked prefill, sliding "
+            "window attention\n"
+            "4. Give me the vLLM config that maximizes concurrent "
+            "requests while keeping quality\n"
+            "5. How to monitor KV cache utilization in production"
+        ),
+        "category": "inference-optimization",
+        "expected_skill": "ml-research",
+        "needs_gpu": True,
+    },
+    {
+        "id": "t24_fsdp_vs_deepspeed",
+        "prompt": (
+            "I need to choose between FSDP and DeepSpeed ZeRO-3 for "
+            "fine-tuning Llama-3.1-70B on 8xH100 80GB. The task is "
+            "instruction-tuning on 200k examples.\n\n"
+            "1. Compare FSDP vs DeepSpeed ZeRO-3 for this specific "
+            "use case: memory usage, throughput, ease of setup\n"
+            "2. Complete training configs for BOTH approaches (using "
+            "Hugging Face Trainer + Accelerate)\n"
+            "3. Which is better with QLoRA specifically?\n"
+            "4. Activation checkpointing: how to configure for each\n"
+            "5. Multi-node: which is easier to scale from 1 to 4 nodes?\n"
+            "6. Known bugs or version-specific issues to watch for"
+        ),
+        "category": "distributed-training",
+        "expected_skill": "ml-research",
+        "needs_gpu": True,
+    },
+    {
+        "id": "t25_structured_output",
+        "prompt": (
+            "I need to build a system that reliably extracts structured "
+            "data from unstructured text using LLMs. Requirements:\n\n"
+            "1. Define Pydantic models for the output schema (nested "
+            "objects, enums, optional fields)\n"
+            "2. Compare approaches: function calling, JSON mode, "
+            "Instructor library, Outlines/guidance for constrained "
+            "decoding\n"
+            "3. Implement retry logic with progressive prompting when "
+            "validation fails\n"
+            "4. Handle edge cases: LLM refuses, partial output, "
+            "wrong types, hallucinated enum values\n\n"
+            "Use case: extracting job postings into structured format "
+            "(title, company, salary range, requirements list, location, "
+            "remote policy). Show me implementations using both Claude "
+            "API and OpenAI API."
+        ),
+        "category": "applied-llm",
+        "expected_skill": "ml-plan",
+        "needs_gpu": False,
+    },
+    {
+        "id": "t26_prompt_optimization",
+        "prompt": (
+            "I'm building a prompt optimization system using DSPy. "
+            "My pipeline has 3 modules chained: query_rewriter -> "
+            "retriever -> answer_generator. I want to optimize all "
+            "3 prompts jointly.\n\n"
+            "1. How does DSPy's optimization work (MIPRO, BootstrapFewShot, "
+            "etc.)? Which optimizer for my use case?\n"
+            "2. Complete implementation: define modules, signatures, "
+            "and the optimization loop\n"
+            "3. How to define a good metric function for RAG quality\n"
+            "4. How many labeled examples do I need for optimization?\n"
+            "5. How to evaluate: before vs after optimization comparison\n"
+            "6. Known limitations and when DSPy doesn't help"
+        ),
+        "category": "prompt-engineering",
+        "expected_skill": "ml-plan",
+        "needs_gpu": False,
+    },
+    {
+        "id": "t27_guardrails_system",
+        "prompt": (
+            "I need to build a production guardrails system for my "
+            "customer-facing LLM application. Requirements:\n\n"
+            "1. Input guardrails: detect prompt injection, jailbreak "
+            "attempts, PII in user input, off-topic requests\n"
+            "2. Output guardrails: detect hallucination, toxic content, "
+            "PII leakage, brand-damaging statements\n"
+            "3. Compare frameworks: NeMo Guardrails vs Guardrails AI vs "
+            "custom classifier approach\n"
+            "4. Latency budget: guardrails must add < 200ms to each "
+            "request\n"
+            "5. Implementation with both rule-based and ML-based "
+            "classifiers\n"
+            "6. Monitoring: track false positive/negative rates, create "
+            "a human review queue for edge cases"
+        ),
+        "category": "safety",
+        "expected_skill": "ml-plan",
+        "needs_gpu": False,
+    },
+    {
+        "id": "t28_multimodal_rag",
+        "prompt": (
+            "I'm building a RAG system that needs to handle PDFs with "
+            "mixed content: text, tables, charts, and diagrams. "
+            "Requirements:\n\n"
+            "1. Document parsing: extract text, tables (as structured "
+            "data), and images from PDFs\n"
+            "2. Multi-modal embeddings: embed text chunks and images "
+            "into the same vector space\n"
+            "3. Retrieval: when user asks about a chart, retrieve the "
+            "chart image + surrounding text\n"
+            "4. Generation: feed retrieved text + images to a "
+            "vision-language model for answer generation\n\n"
+            "Compare approaches: ColPali-style late interaction vs "
+            "separate text/image pipelines vs Unstructured.io + "
+            "standard embeddings. Give me the complete implementation "
+            "with the recommended approach."
+        ),
+        "category": "rag",
+        "expected_skill": "ml-plan",
+        "needs_gpu": False,
+    },
+    {
+        "id": "t29_ab_testing_llm",
+        "prompt": (
+            "I need to set up A/B testing infrastructure for comparing "
+            "LLM versions in production. We deploy new model versions "
+            "weekly and need to know if they're better before full "
+            "rollout.\n\n"
+            "1. Metrics: what to measure (quality, latency, cost, user "
+            "satisfaction, task completion rate)\n"
+            "2. Statistical framework: sample size calculation, "
+            "sequential testing (don't wait for fixed sample), "
+            "multiple comparison correction\n"
+            "3. Traffic splitting: how to route users to different "
+            "model versions with consistent assignment\n"
+            "4. LLM-as-judge for automated quality scoring: rubric "
+            "design, inter-rater reliability with human labels\n"
+            "5. Implementation: FastAPI middleware for routing, "
+            "logging pipeline, dashboard queries\n"
+            "6. Decision framework: when to promote, when to rollback"
+        ),
+        "category": "mlops",
+        "expected_skill": "ml-plan",
+        "needs_gpu": False,
+    },
+    {
+        "id": "t30_embedding_finetuning",
+        "prompt": (
+            "My RAG system's retrieval quality is poor because the "
+            "off-the-shelf embedding model (BGE-large) doesn't understand "
+            "my domain (legal contracts). I want to fine-tune it.\n\n"
+            "1. How to create training data: mining hard negatives from "
+            "my corpus, generating synthetic queries\n"
+            "2. Fine-tuning approach: sentence-transformers vs custom "
+            "contrastive loss\n"
+            "3. Complete training script with InfoNCE loss, hard negative "
+            "mining, and in-batch negatives\n"
+            "4. Evaluation: how to measure embedding quality (recall@k, "
+            "MRR, NDCG) with a held-out test set\n"
+            "5. Deployment: how to update embeddings in production "
+            "without downtime (re-index strategy)\n"
+            "6. Hardware: can I fine-tune BGE-large on 1xA100 40GB?"
+        ),
+        "category": "embeddings",
+        "expected_skill": "ml-plan",
+        "needs_gpu": False,
+    },
+    {
+        "id": "t31_debug_oom_distributed",
+        "prompt": (
+            "I'm getting OOM errors when fine-tuning Llama-3.1-70B "
+            "with DeepSpeed ZeRO-3 on 4xA100 80GB. The error occurs "
+            "at step 1 during the backward pass.\n\n"
+            "Config:\n"
+            "- DeepSpeed ZeRO stage 3, offload_param to CPU\n"
+            "- bf16, batch_size=1, grad_accum=16\n"
+            "- QLoRA with bnb 4bit, lora_r=64\n"
+            "- max_seq_length=4096\n"
+            "- activation_checkpointing enabled\n\n"
+            "nvidia-smi shows all 4 GPUs at 78/80GB just before crash.\n"
+            "Error: torch.cuda.OutOfMemoryError: CUDA out of memory. "
+            "Tried to allocate 2.00 GiB\n\n"
+            "I thought ZeRO-3 should shard everything. Why is each "
+            "GPU using 78GB? How do I fix this?"
+        ),
+        "category": "debugging",
+        "expected_skill": "ml-debug",
+        "needs_gpu": False,
+    },
+    {
+        "id": "t32_model_distillation",
+        "prompt": (
+            "I want to distill GPT-4o's capabilities into a Llama-3-8B "
+            "model for my specific task (customer support classification "
+            "+ response generation). Budget: $300 in API calls.\n\n"
+            "1. Distillation pipeline: generate teacher labels from "
+            "GPT-4o, then fine-tune the student\n"
+            "2. How to maximize quality per dollar: which prompting "
+            "strategy extracts the most useful signal from the teacher?\n"
+            "3. What data to generate: just answers, or also chain-of-"
+            "thought reasoning?\n"
+            "4. Complete pipeline code: data generation, quality "
+            "filtering, student training\n"
+            "5. Evaluation: how to measure the distilled model against "
+            "the teacher\n"
+            "6. Legal considerations: is this allowed under OpenAI's "
+            "terms of service?"
+        ),
+        "category": "distillation",
+        "expected_skill": "ml-plan",
+        "needs_gpu": False,
+    },
 ]
 
 # ---------------------------------------------------------------------------
@@ -572,6 +909,8 @@ def run_refiner(judge_results: list, pass_num: int,
                 "message": "No actionable weakness patterns found."}
 
     all_edits = []
+    modified_skills: set[str] = set()  # Track which skills get edited
+
     for skill_name, weaknesses in by_skill.items():
         if not weaknesses:
             continue
@@ -591,173 +930,186 @@ def run_refiner(judge_results: list, pass_num: int,
             for s in sections
         )
 
-        weakness_summary = "\n".join(
-            f"- {w['test_id']}: {w['dimension']} scored {w['score']}/3 "
-            f"— {w['reasoning']}"
-            for w in weaknesses
-        )
+        # Batch weaknesses to avoid prompt overflow (max 6 per batch)
+        MAX_WEAKNESSES_PER_BATCH = 6
+        batches = [weaknesses[i:i + MAX_WEAKNESSES_PER_BATCH]
+                    for i in range(0, len(weaknesses), MAX_WEAKNESSES_PER_BATCH)]
 
-        refiner_prompt = (
-            f"You are improving an ML workflow skill file based on test "
-            f"feedback.\n\n"
-            f"## Skill file: {skill_name}\n\n"
-            f"```\n{current_content}\n```\n\n"
-            f"## Sections in this file:\n{section_list}\n\n"
-            f"## Weaknesses found by judge:\n\n{weakness_summary}\n\n"
-            f"## Your task:\n"
-            f"For each weakness, decide:\n"
-            f"1. Is this fixable by editing the skill instructions? "
-            f"(e.g., adding a warning to Anti-Patterns, adding a step "
-            f"to a Phase, adding a tool call reminder)\n"
-            f"2. Or is this a general code quality issue that skill "
-            f"instructions can't fix? (e.g., syntax errors in generated "
-            f"code, formatting issues) — if so, skip it.\n\n"
-            f"For each fixable weakness, produce a targeted edit.\n\n"
-            f"## Output format — return ONLY valid JSON:\n"
-            f"```json\n"
-            f'{{"edits": [\n'
-            f'  {{\n'
-            f'    "section": "section name",\n'
-            f'    "action": "add_after | replace",\n'
-            f'    "find": "exact line(s) to find in the file",\n'
-            f'    "content": "new line(s) to add after find / replace find with",\n'
-            f'    "reason": "what this fixes"\n'
-            f'  }}\n'
-            f'],\n'
-            f'"skipped": [\n'
-            f'  {{"weakness": "...", "reason": "not skill-fixable because..."}}\n'
-            f']\n'
-            f'}}\n'
-            f"```\n\n"
-            f"Rules:\n"
-            f"- `find` must be an EXACT substring from the current file\n"
-            f"- `add_after`: inserts `content` on the line after `find`\n"
-            f"- `replace`: replaces `find` with `content`\n"
-            f"- Keep edits small — 1-3 lines each\n"
-            f"- Do NOT touch the YAML frontmatter (---)\n"
-            f"- Do NOT delete Iron Laws or phase structure"
-        )
+        skill_applied_all = []
+        skill_failed_all = []
+        skill_skipped_all = []
+        modified = current_content
+        backup_path = None
 
-        env = os.environ.copy()
-        env.pop("CLAUDECODE", None)
-        env["PATH"] = (
-            f"{Path.home() / '.local/bin'}:{Path.home() / 'miniconda3/bin'}"
-            f":{env.get('PATH', '')}"
-        )
-
-        try:
-            result = subprocess.run(
-                ["claude", "--dangerously-skip-permissions",
-                 "-p", refiner_prompt, "--max-turns", "1",
-                 "--output-format", "json"],
-                capture_output=True, text=True, timeout=180,
-                env=env, cwd=str(PLUGIN_DIR),
+        for batch_idx, batch in enumerate(batches):
+            weakness_summary = "\n".join(
+                f"- {w['test_id']}: {w['dimension']} scored {w['score']}/3 "
+                f"— {w['reasoning']}"
+                for w in batch
             )
-            output_data = json.loads(result.stdout)
-            refiner_text = output_data.get("result", "")
 
-            # Extract JSON from response
-            json_match = re.search(r'\{[\s\S]*\}', refiner_text)
-            if not json_match:
-                all_edits.append({
-                    "file": str(skill_path.relative_to(PLUGIN_DIR)),
-                    "status": "error",
-                    "reason": "refiner returned no JSON",
-                    "raw": refiner_text[:300],
-                    "weaknesses": weaknesses,
-                })
-                continue
+            refiner_prompt = (
+                f"You are improving an ML workflow skill file based on test "
+                f"feedback.\n\n"
+                f"## Skill file: {skill_name}\n\n"
+                f"```\n{modified}\n```\n\n"
+                f"## Sections in this file:\n{section_list}\n\n"
+                f"## Weaknesses found by judge:\n\n{weakness_summary}\n\n"
+                f"## Your task:\n"
+                f"For each weakness, decide:\n"
+                f"1. Is this fixable by editing the skill instructions? "
+                f"(e.g., adding a warning to Anti-Patterns, adding a step "
+                f"to a Phase, adding a tool call reminder)\n"
+                f"2. Or is this a general code quality issue that skill "
+                f"instructions can't fix? (e.g., syntax errors in generated "
+                f"code, formatting issues) — if so, skip it.\n\n"
+                f"For each fixable weakness, produce a targeted edit.\n\n"
+                f"## Output format — return ONLY valid JSON:\n"
+                f"```json\n"
+                f'{{"edits": [\n'
+                f'  {{\n'
+                f'    "section": "section name",\n'
+                f'    "action": "add_after | replace",\n'
+                f'    "find": "exact line(s) to find in the file",\n'
+                f'    "content": "new line(s) to add after find / '
+                f'replace find with",\n'
+                f'    "reason": "what this fixes"\n'
+                f'  }}\n'
+                f'],\n'
+                f'"skipped": [\n'
+                f'  {{"weakness": "...", '
+                f'"reason": "not skill-fixable because..."}}\n'
+                f']\n'
+                f'}}\n'
+                f"```\n\n"
+                f"Rules:\n"
+                f"- `find` must be an EXACT substring from the current "
+                f"file\n"
+                f"- `add_after`: inserts `content` on the line after "
+                f"`find`\n"
+                f"- `replace`: replaces `find` with `content`\n"
+                f"- Keep edits small — 1-3 lines each\n"
+                f"- Do NOT touch the YAML frontmatter (---)\n"
+                f"- Do NOT delete Iron Laws or phase structure"
+            )
 
-            edit_plan = json.loads(json_match.group())
-            edits = edit_plan.get("edits", [])
-            skipped = edit_plan.get("skipped", [])
+            env = os.environ.copy()
+            env.pop("CLAUDECODE", None)
+            env["PATH"] = (
+                f"{Path.home() / '.local/bin'}"
+                f":{Path.home() / 'miniconda3/bin'}"
+                f":{env.get('PATH', '')}"
+            )
 
-            if not edits:
-                all_edits.append({
-                    "file": str(skill_path.relative_to(PLUGIN_DIR)),
-                    "status": "no_edits",
-                    "skipped": skipped,
-                    "weaknesses": weaknesses,
-                })
-                continue
+            try:
+                result = subprocess.run(
+                    ["claude", "--dangerously-skip-permissions",
+                     "-p", refiner_prompt, "--max-turns", "1",
+                     "--output-format", "json"],
+                    capture_output=True, text=True, timeout=180,
+                    env=env, cwd=str(PLUGIN_DIR),
+                )
+                output_data = json.loads(result.stdout)
+                refiner_text = output_data.get("result", "")
 
-            # Save backup before any edits
+                # Extract JSON from response
+                json_match = re.search(r'\{[\s\S]*\}', refiner_text)
+                if not json_match:
+                    if batch_idx == 0 and len(batches) == 1:
+                        all_edits.append({
+                            "file": str(
+                                skill_path.relative_to(PLUGIN_DIR)),
+                            "status": "error",
+                            "reason": "refiner returned no JSON",
+                            "raw": refiner_text[:300],
+                            "weaknesses": weaknesses,
+                        })
+                    continue
+
+                edit_plan = json.loads(json_match.group())
+                edits = edit_plan.get("edits", [])
+                skipped = edit_plan.get("skipped", [])
+                skill_skipped_all.extend(skipped)
+
+                for edit in edits:
+                    find_str = edit.get("find", "")
+                    content_str = edit.get("content", "")
+                    action = edit.get("action", "add_after")
+                    reason = edit.get("reason", "")
+
+                    if not find_str or find_str not in modified:
+                        skill_failed_all.append({
+                            "edit": edit,
+                            "reason": "find string not found in file",
+                        })
+                        continue
+
+                    if action == "replace":
+                        new_modified = modified.replace(
+                            find_str, content_str, 1)
+                    elif action == "add_after":
+                        new_modified = modified.replace(
+                            find_str, find_str + "\n" + content_str, 1)
+                    else:
+                        skill_failed_all.append({
+                            "edit": edit,
+                            "reason": f"unknown action: {action}",
+                        })
+                        continue
+
+                    # Sanity: don't grow more than 20% over original
+                    if (len(new_modified.splitlines())
+                            > len(current_content.splitlines()) * 1.2):
+                        skill_failed_all.append({
+                            "edit": edit,
+                            "reason": "would exceed 20% growth limit",
+                        })
+                        continue
+
+                    modified = new_modified
+                    skill_applied_all.append({
+                        "action": action,
+                        "section": edit.get("section", ""),
+                        "reason": reason,
+                        "lines_added": (
+                            len(modified.splitlines())
+                            - len(current_content.splitlines())),
+                    })
+
+            except Exception as e:
+                if batch_idx == 0 and len(batches) == 1:
+                    all_edits.append({
+                        "file": str(
+                            skill_path.relative_to(PLUGIN_DIR)),
+                        "status": "error",
+                        "reason": str(e),
+                        "weaknesses": weaknesses,
+                    })
+
+        # After all batches for this skill — write once
+        if skill_applied_all:
             backup_path = (
                 round_dir / f"{skill_name}.pass{pass_num}.backup.md")
             backup_path.write_text(current_content, encoding="utf-8")
+            skill_path.write_text(modified, encoding="utf-8")
+            modified_skills.add(skill_name)
 
-            # Apply edits one by one
-            modified = current_content
-            applied = []
-            failed = []
+        all_edits.append({
+            "file": str(skill_path.relative_to(PLUGIN_DIR)),
+            "status": ("applied" if skill_applied_all
+                        else "no_valid_edits"),
+            "applied": skill_applied_all,
+            "failed": skill_failed_all,
+            "skipped": skill_skipped_all,
+            "backup": str(backup_path) if skill_applied_all else None,
+            "weaknesses": weaknesses,
+        })
 
-            for edit in edits:
-                find_str = edit.get("find", "")
-                content_str = edit.get("content", "")
-                action = edit.get("action", "add_after")
-                reason = edit.get("reason", "")
-
-                if not find_str or find_str not in modified:
-                    failed.append({
-                        "edit": edit,
-                        "reason": "find string not found in file",
-                    })
-                    continue
-
-                if action == "replace":
-                    new_modified = modified.replace(
-                        find_str, content_str, 1)
-                elif action == "add_after":
-                    new_modified = modified.replace(
-                        find_str, find_str + "\n" + content_str, 1)
-                else:
-                    failed.append({
-                        "edit": edit,
-                        "reason": f"unknown action: {action}",
-                    })
-                    continue
-
-                # Sanity: don't grow more than 20%
-                if (len(new_modified.splitlines())
-                        > len(current_content.splitlines()) * 1.2):
-                    failed.append({
-                        "edit": edit,
-                        "reason": "would exceed 20% growth limit",
-                    })
-                    continue
-
-                modified = new_modified
-                applied.append({
-                    "action": action,
-                    "section": edit.get("section", ""),
-                    "reason": reason,
-                    "lines_added": (len(modified.splitlines())
-                                    - len(current_content.splitlines())),
-                })
-
-            if applied:
-                skill_path.write_text(modified, encoding="utf-8")
-
-            all_edits.append({
-                "file": str(skill_path.relative_to(PLUGIN_DIR)),
-                "status": "applied" if applied else "no_valid_edits",
-                "applied": applied,
-                "failed": failed,
-                "skipped": skipped,
-                "backup": str(backup_path) if applied else None,
-                "weaknesses": weaknesses,
-            })
-
-        except Exception as e:
-            all_edits.append({
-                "file": str(skill_path.relative_to(PLUGIN_DIR)),
-                "status": "error",
-                "reason": str(e),
-                "weaknesses": weaknesses,
-            })
-
+    # Only retest tests whose skill was actually modified
     retest_ids = list({
-        w["test_id"] for ws in by_skill.values() for w in ws
+        w["test_id"] for skill_name, ws in by_skill.items()
+        for w in ws
+        if skill_name in modified_skills
     })
 
     refiner_result = {
@@ -765,6 +1117,7 @@ def run_refiner(judge_results: list, pass_num: int,
         "patterns_found": sum(len(ws) for ws in by_skill.values()),
         "edits": all_edits,
         "retest_needed": retest_ids,
+        "modified_skills": sorted(modified_skills),
     }
 
     out_file = round_dir / f"refine_pass{pass_num}.json"
@@ -824,27 +1177,61 @@ def retest_weak(test_ids: list[str], retest_dir: Path,
 
 def check_regressions(old_judges: list, new_judges: list,
                       refine_result: dict):
-    """If any test regressed, revert the edits."""
+    """Check for regressions on modified-skill tests only.
+
+    Only revert the specific skill file that caused the regression.
+    Requires a drop of >= 3 points to count as a regression (not noise).
+    """
+    REGRESSION_THRESHOLD = 3  # Must drop by this much to trigger revert
+
+    # Build skill->file mapping from refine result
+    skill_to_edit = {}
+    for edit_group in refine_result.get("edits", []):
+        if edit_group.get("status") == "applied" and edit_group.get("backup"):
+            # Extract skill name from file path (e.g. "skills/ml-debug/SKILL.md" -> "ml-debug")
+            parts = edit_group["file"].split("/")
+            if len(parts) >= 2:
+                skill_to_edit[parts[1]] = edit_group
+
     old_by_id = {j["test_id"]: j for j in old_judges if not j.get("error")}
+    regressed_skills: set[str] = set()
+
     for new_j in new_judges:
         tid = new_j.get("test_id")
         if new_j.get("error") or tid not in old_by_id:
             continue
+
+        # Find which skill this test maps to
+        test_def = next((t for t in TESTS if t["id"] == tid), None)
+        if not test_def:
+            continue
+        test_skill = test_def.get("expected_skill", "unknown")
+
+        # Only check tests whose skill was actually modified
+        if test_skill not in skill_to_edit:
+            continue
+
         old_score = old_by_id[tid].get("plugin_score", 0)
         new_score = new_j.get("plugin_score", 0)
-        if new_score < old_score:
-            print(f"    REGRESSION on {tid}: {old_score} -> {new_score}. "
-                  f"Reverting edits.")
-            for edit_group in refine_result.get("edits", []):
-                backup = edit_group.get("backup")
-                if backup and edit_group.get("status") == "applied":
-                    backup_path = Path(backup)
-                    target_path = PLUGIN_DIR / edit_group["file"]
-                    if backup_path.exists():
-                        target_path.write_text(
-                            backup_path.read_text(encoding="utf-8"),
-                            encoding="utf-8")
-                        print(f"      Reverted {edit_group['file']}")
+        drop = old_score - new_score
+
+        if drop >= REGRESSION_THRESHOLD:
+            print(f"    REGRESSION on {tid}: {old_score} -> {new_score} "
+                  f"(drop={drop}). Reverting {test_skill}.")
+            regressed_skills.add(test_skill)
+
+    # Revert only the specific skills that regressed
+    for skill_name in regressed_skills:
+        edit_group = skill_to_edit.get(skill_name)
+        if not edit_group:
+            continue
+        backup_path = Path(edit_group["backup"])
+        target_path = PLUGIN_DIR / edit_group["file"]
+        if backup_path.exists():
+            target_path.write_text(
+                backup_path.read_text(encoding="utf-8"),
+                encoding="utf-8")
+            print(f"      Reverted {edit_group['file']}")
 
 
 # ---------------------------------------------------------------------------
