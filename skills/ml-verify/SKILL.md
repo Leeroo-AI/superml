@@ -1,47 +1,51 @@
 ---
 name: ml-verify
-description: Use when the user wants to verify code correctness, config validity, math/logic accuracy, or API usage against Leeroopedia KB
+description: Use when the user wants to verify code, config, or math before running — or proactively before any expensive training job or deployment
 ---
 
-# ML Verification Workflow
+# ML Verification
 
-Verify ML code, configs, and math against Leeroopedia KB documentation.
+Catch mistakes before they waste GPU hours. Verify configs, code, and math against documented framework behavior.
 
-**CRITICAL: Call the verification tool IMMEDIATELY with the user's code/config.** Do NOT eyeball it first. The KB catches framework-specific issues you might miss.
+## The Iron Law
 
-## When to Use
+```
+NO TRAINING RUN WITHOUT VERIFICATION FIRST
+```
 
-- User asks "Is this code correct?"
-- User wants to validate a training config before running
-- User needs to check math/algorithm implementation
-- User asks about correct API usage for a framework
-- Before running an expensive training job (proactive verification)
+An hour of verification saves days of debugging failed runs. Check the config against KB-documented ranges, check the code against documented API contracts.
 
-## Mode A: Code/Math Verification
+## Phases
 
-### 1. Verify against KB
-Call `verify_code_math(code_snippet, concept_name)` with:
-- **code_snippet**: The code or formula to check
-- **concept_name**: What it's implementing (e.g., "LoRA scaling factor", "gradient accumulation with DDP")
+### Phase 1: Check Against KB
 
-### 2. Fill in framework details
-If verification depends on framework-specific behavior, call `search_knowledge` for the exact API contract or documented behavior.
+**For code/math:** Call `verify_code_math(code_snippet, concept_name)` with:
+- The code, formula, or config to check
+- What it's implementing (e.g., "LoRA scaling factor", "gradient accumulation with DDP")
 
-### 3. Present result
-Pass/Fail with specific discrepancies and corrected code.
+**For configs/hyperparameters:** Call `query_hyperparameter_priors(query)` with:
+- Model size, task type, hardware, and framework context
+- The specific parameters you're checking
 
-## Mode B: Config Verification
+**For full training configs:** Call `review_plan(proposal, goal)` with:
+- The complete config as the proposal
+- The training objective as the goal
 
-### 1. Check hyperparameters
-Call `query_hyperparameter_priors(query)` with the model size, task, and hardware context.
+Run whichever combination fits. When in doubt, run all applicable checks in parallel.
 
-### 2. Review the full config
-Call `review_plan(proposal, goal)` with the config as the proposal and the training goal.
+**Gate**: Every parameter and code path has been checked against KB documentation.
 
-### 3. Present result
-Flag any values outside recommended ranges with KB-grounded alternatives. **Before sending:** scan your draft — every `##` section MUST have at least one `[Category/Page_Name]` citation from tool results.
+### Phase 2: Dry Run Checklist
 
-## Output Format
+Before the real run, verify these can complete without error:
+- [ ] Model loads on target hardware (no OOM on init)
+- [ ] Data pipeline produces correctly shaped batches
+- [ ] Forward + backward pass completes (1 step, no crash)
+- [ ] Loss is a reasonable initial value (not 0, not NaN, not 1e6)
+- [ ] Gradient norms are in expected range
+- [ ] Checkpoint save/load works
+
+Present the result:
 
 ```
 ## Verification: [what was checked]
@@ -49,17 +53,42 @@ Flag any values outside recommended ranges with KB-grounded alternatives. **Befo
 **Verdict**: PASS / FAIL / WARNING
 
 ### Findings
-- [item]: [status] — [explanation] [PageID]
-- ...
+| Check | Status | Detail |
+|-------|--------|--------|
+| [item] | PASS/FAIL/WARN | [explanation] [PageID] |
+
+### Issues Found (if any)
+1. **[Issue]**: [what's wrong] [PageID]
+   - Current: `param = value`
+   - Recommended: `param = value` [PageID]
+   - Why: [one sentence explanation]
 
 ### Corrected Version (if FAIL)
 ```[language]
 [corrected code or config]
 ```
 
-### Rationale
-[Why the correction is needed, citing KB]
+### Dry-Run Command
+```bash
+[command to run 1-step verification]
 ```
+```
+
+## After This
+
+- **PASS** → Proceed to training. Log the experiment with **ml-experiment**.
+- **WARNING** → Proceed with monitoring. Watch the flagged parameters closely.
+- **FAIL** → Fix before running. If the fix is non-obvious, invoke **ml-debug**.
+
+## Anti-Patterns
+
+| Mistake | Why it happens | What to do instead |
+|---------|---------------|-------------------|
+| alpha/r ratio inverted | LoRA alpha=16 with r=64 gives 0.25x scaling — often too low | Check: alpha/r should typically be 1-2x. KB has per-framework defaults. |
+| LR 100x too high for PEFT | Using full fine-tuning LR (1e-3) with LoRA | PEFT typically needs 1e-4 to 5e-5. Check KB for model-specific ranges. |
+| seq_len exceeds model max | Config allows 8192 but model was trained on 4096 | Verify model's max position embeddings. RoPE scaling needed beyond native context. |
+| Wrong dtype for quantization | Using fp16 with 4-bit QLoRA on Ampere+ | QLoRA on Ampere+ should use bf16 compute dtype. fp16 causes instability. |
+| Missing warmup for large LR | Jumping to peak LR on step 1 | Use 3-10% warmup. More important with larger LR or smaller datasets. |
 
 ## Examples
 
@@ -67,10 +96,10 @@ Flag any values outside recommended ranges with KB-grounded alternatives. **Befo
 1. `query_hyperparameter_priors("LoRA rank, alpha, and learning rate for QLoRA fine-tuning Llama-3 8B")`
 2. `review_plan("lora_r=64, lora_alpha=16, lr=5e-5, target_modules=['q_proj','v_proj']", "QLoRA instruction tuning Llama-3 8B")`
 
-**"Is my gradient accumulation math right?"**
-1. `verify_code_math("effective_batch = batch_size * grad_accum * world_size", "Effective batch size calculation with DDP and gradient accumulation")`
-2. `search_knowledge("gradient accumulation effective batch size DDP DeepSpeed")`
-
 **"Check my vLLM serving config before deployment"**
 1. `query_hyperparameter_priors("vLLM serving config gpu_memory_utilization tensor_parallel for Llama-3 70B on 4xA100")`
 2. `review_plan("[user's vLLM config]", "Serve Llama-3 70B with vLLM on 4xA100 80GB")`
+
+**"Is my gradient accumulation math right?"**
+1. `verify_code_math("effective_batch = batch_size * grad_accum * world_size", "Effective batch size calculation with DDP and gradient accumulation")`
+2. `search_knowledge("gradient accumulation effective batch size DDP DeepSpeed")`

@@ -80,10 +80,11 @@ claude mcp add --transport http leeroopedia "https://mcp.leeroopedia.com/mcp?tok
 | Skill | Description |
 |-------|-------------|
 | [ml-debug](skills/ml-debug/SKILL.md) | Use when something is failing in ML/AI work — OOM, NaN, divergence, crashes, bad throughput, wrong outputs, dependency conflicts |
-| [ml-iterate](skills/ml-iterate/SKILL.md) | Use when the user is stuck, needs ranked next steps, or wants alternatives after initial experiments with ML/AI systems |
-| [ml-plan](skills/ml-plan/SKILL.md) | Use when the user wants an implementation plan, architecture design, or multi-step ML pipeline grounded in Leeroopedia KB |
-| [ml-research](skills/ml-research/SKILL.md) | Use when the user wants to understand an ML/AI topic, compare approaches, or survey framework capabilities via Leeroopedia KB |
-| [ml-verify](skills/ml-verify/SKILL.md) | Use when the user wants to verify code correctness, config validity, math/logic accuracy, or API usage against Leeroopedia KB |
+| [ml-experiment](skills/ml-experiment/SKILL.md) | Use when starting, logging, or reviewing ML experiments — maintains a persistent experiment journal with hypotheses, results, and learnings across sessions |
+| [ml-iterate](skills/ml-iterate/SKILL.md) | Use when the user is stuck, needs ranked next steps, or wants alternatives after initial experiments — "I tried X and got Y, what next?" |
+| [ml-plan](skills/ml-plan/SKILL.md) | Use when the user wants an implementation plan, architecture design, or multi-step ML pipeline — "build X", "implement X", "design X", "set up X" |
+| [ml-research](skills/ml-research/SKILL.md) | Use when the user wants to understand an ML/AI topic, compare approaches, or survey framework capabilities — "how does X work?", "compare X vs Y" |
+| [ml-verify](skills/ml-verify/SKILL.md) | Use when the user wants to verify code, config, or math before running — or proactively before any expensive training job or deployment |
 | [using-leeroopedia](skills/using-leeroopedia/SKILL.md) | Use when starting any conversation involving ML/AI — establishes how to use Leeroopedia KB tools and workflow skills |
 <!-- END_SKILLS_TABLE -->
 

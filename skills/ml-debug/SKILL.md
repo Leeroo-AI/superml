@@ -3,68 +3,98 @@ name: ml-debug
 description: Use when something is failing in ML/AI work — OOM, NaN, divergence, crashes, bad throughput, wrong outputs, dependency conflicts
 ---
 
-# ML Debugging Workflow
+# ML Debugging
 
-Systematically diagnose ML/AI failures using Leeroopedia KB.
+Systematically diagnose ML failures using framework-specific knowledge, not guesswork.
 
-**CRITICAL: Call `diagnose_failure` IMMEDIATELY with whatever error info you have.** Do NOT guess at the cause first. The KB has framework-specific failure patterns you don't know about.
+## The Iron Law
 
-## When to Use
+```
+NO FIX WITHOUT UNDERSTANDING THE ROOT CAUSE FIRST
+```
 
-- Training crashes (OOM, CUDA errors, NCCL timeouts)
-- Loss divergence, NaN/Inf values
-- Bad model outputs after training
-- Inference serving failures or poor throughput
-- Dependency conflicts or version mismatches
-- Any "it doesn't work" in ML context
+Applying fixes without diagnosis leads to fix-on-fix layering. The third "fix" usually breaks something the first fix was hiding.
 
-## Workflow
+## Phases
 
-### 1. Diagnose IMMEDIATELY
-Call `diagnose_failure(symptoms, logs)` with:
-- **symptoms**: Clear description of what's failing and what was expected
-- **logs**: The most relevant error lines, stack trace, or unexpected output
+### Phase 1: Gather Evidence — Diagnose Immediately
 
-### 2. Check configuration (if config-related)
-If the diagnosis points to hyperparameters or config, call `query_hyperparameter_priors(query)` for recommended values given the user's setup.
+Call `diagnose_failure(symptoms, logs)` with everything available:
+- **symptoms**: What's failing, what was expected, when it started
+- **logs**: Error lines, stack trace, unexpected output, metrics timeline
 
-### 3. Propose alternatives (if ambiguous)
-If multiple root causes are plausible, call `propose_hypothesis(current_status, recent_experiments?)` for ranked hypotheses.
+Do NOT guess at the cause. The KB has framework-specific failure patterns — use them.
 
-### 4. Get implementation details
-Call `search_knowledge` for the specific fix — framework-specific config changes, memory optimizations, version-specific workarounds.
+**Gate**: You have a KB-grounded diagnosis with a root cause hypothesis before proposing any fix.
 
-### 5. Compose with citations
-**Before sending:** scan your draft — every `##` section MUST have at least one `[Category/Page_Name]` citation from tool results. If a section has none, find the relevant citation and add it.
+### Phase 2: Confirm the Diagnosis
 
-## Output Format
+Ask yourself before fixing:
+- Is this **deterministic** (happens every time) or **intermittent** (timing/race condition)?
+- Does it happen on **first step** (config/setup issue) or **step N** (accumulation/overflow)?
+- Is it **one GPU** or **all GPUs** (distributed-specific vs general)?
+- What **changed** since it last worked?
 
-Every key claim MUST include a `[PageID]` citation from the KB response:
+If the diagnosis is ambiguous:
+1. Call `propose_hypothesis(current_status, recent_experiments?)` for ranked alternatives
+2. Call `query_hyperparameter_priors(query)` if the diagnosis points to config values
+
+**Gate**: You can explain the root cause in one sentence and say why the proposed fix addresses it.
+
+### Phase 3: Fix + Verify
+
+1. Apply the fix — provide specific config changes, code patches, or commands
+2. Include a verification step: "Run 10 steps and confirm [specific behavior]"
+3. If the fix involves hyperparameters, include the recommended range from KB
+
+Present the result:
 
 ```
 ## Diagnosis
 
-**Root cause**: [most likely cause] [PageID]
-**Confidence**: High/Medium/Low
+**Root cause**: [one sentence] [PageID]
+**Confidence**: High / Medium / Low
+**Evidence**: [what in the logs/symptoms points to this]
 
 ### Fix
-1. [specific action with config/code] [PageID]
-2. ...
+1. [specific action with exact config/code] [PageID]
+2. [verification step — how to confirm the fix worked]
 
-### If that doesn't work
-- Alternative cause: ... → Try: ... [PageID]
+### If That Doesn't Work
+- Alternative cause: [what else it could be] → Try: [next diagnostic step] [PageID]
 
 ### Prevention
-- [how to avoid this in future] [PageID]
+- [how to catch this earlier next time] [PageID]
 ```
+
+## After This
+
+- **Log the fix** in `experiments/lessons.md` — include the symptom, root cause, and fix so it's findable next time
+- If the fix didn't work → back to **Phase 1** with the new evidence (what the fix changed, what happened)
+- If the fix worked → invoke **ml-verify** to confirm the config is solid before continuing
+- If the issue revealed a config problem → invoke **ml-verify** on the full config
+
+## Anti-Patterns
+
+| Mistake | Why it happens | What to do instead |
+|---------|---------------|-------------------|
+| Blaming batch size for every OOM | It's the most common OOM cause, but not the only one | Check: is it activation memory, optimizer states, or KV cache? Different fixes. |
+| Changing LR when data is the problem | LR is easy to change; data quality is hard to inspect | Look at loss curves shape first. Plateau ≠ LR issue. Noisy loss = data issue. |
+| Fixing symptoms not causes | "Add gradient clipping" without asking why gradients explode | Trace back: bad initialization? LR too high? Data outliers? Mixed precision overflow? |
+| Applying multiple fixes at once | "Let me reduce batch size AND add grad clipping AND lower LR" | One fix at a time. Otherwise you can't attribute improvement. |
+| Not checking what changed | "It was working yesterday" | `git diff`, env changes, package updates, data changes. Find the delta. |
 
 ## Examples
 
 **"QLoRA OOM on A100 40GB, batch size 4, seq len 4096"**
-1. `diagnose_failure("OOM during QLoRA fine-tuning on A100 40GB, batch size 4, seq len 4096, Qwen2.5-7B", "RuntimeError: CUDA out of memory. Tried to allocate 2.00 GiB")`
+1. `diagnose_failure("OOM during QLoRA fine-tuning on A100 40GB, batch_size=4, seq_len=4096, Qwen2.5-7B", "RuntimeError: CUDA out of memory. Tried to allocate 2.00 GiB")`
 2. `query_hyperparameter_priors("QLoRA memory-safe batch size and seq length for 7B model on A100 40GB")`
 
 **"Training loss stuck at 2.3, not decreasing"**
 1. `diagnose_failure("Training loss plateaued at 2.3 after 100 steps, not decreasing", "Step 100: loss=2.31, Step 200: loss=2.29, Step 300: loss=2.30")`
 2. `propose_hypothesis("Loss plateau at 2.3 during SFT of Llama-3 8B", "Tried lr=2e-5, cosine schedule, warmup 10%")`
 3. `query_hyperparameter_priors("Learning rate and schedule for SFT Llama-3 8B on instruction data")`
+
+**"NCCL timeout during distributed training"**
+1. `diagnose_failure("NCCL timeout after 30 seconds during DDP init, 4 nodes 8xH100", "RuntimeError: NCCL communicator was aborted... NCCL_TIMEOUT")`
+2. `search_knowledge("NCCL timeout debugging multi-node distributed training InfiniBand")`

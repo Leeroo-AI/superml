@@ -1,76 +1,99 @@
 ---
 name: ml-plan
-description: Use when the user wants an implementation plan, architecture design, or multi-step ML pipeline grounded in Leeroopedia KB
+description: Use when the user wants an implementation plan, architecture design, or multi-step ML pipeline — "build X", "implement X", "design X", "set up X"
 ---
 
-# ML Planning Workflow
+# ML Planning
 
-Build KB-grounded implementation plans for ML/AI systems.
+Turn goals into validated, runnable implementation plans grounded in framework documentation.
 
-**CRITICAL: Call `build_plan` IMMEDIATELY with the user's stated goal.** Do NOT ask clarifying questions first. Do NOT brainstorm first. The KB will give you a grounded plan that you can refine with the user afterward.
+## The Iron Law
 
-## When to Use
+```
+NO IMPLEMENTATION WITHOUT A VALIDATED PLAN FIRST
+```
 
-- User says "build", "implement", "design", "set up", "create" anything ML/AI
-- User wants an end-to-end pipeline (training, serving, evaluation)
-- User needs architecture design for an ML system
-- User asks for a step-by-step approach to an ML task
+A plan that hasn't been reviewed against the KB is a guess. Guesses waste GPU hours.
 
-## Workflow
+## Phases
 
-### 1. Build the plan IMMEDIATELY
-Call `build_plan(goal, constraints?)` with the user's stated goal and any constraints they mentioned.
+### Phase 1: Understand — Build the Plan
+
+Call `build_plan(goal, constraints?)` IMMEDIATELY with the user's stated goal.
+
 - Use the user's exact words as the goal
 - Include any hardware, framework, latency, or scale constraints they mentioned
-- Do NOT wait for more information — use what you have
+- Do NOT wait for more information — use what you have now
 
-### 2. Review the plan
-Call `review_plan(proposal, goal)` with the plan from step 1 to catch risks and improvements.
+**Gate**: You have a KB-grounded plan with numbered steps and validation criteria before proceeding.
 
-### 3. Fill knowledge gaps
-Identify the 2-4 most uncertain steps. Call `search_knowledge` in **parallel**:
-- Framework-specific API details
-- Config format requirements
-- Known pitfalls or gotchas
-- Performance characteristics
+### Phase 2: Validate — Review and Gap-Fill
 
-### 4. Present the validated plan
-Combine into a final plan with inline `[PageID]` citations. **Before sending:** scan your draft — every `##` section MUST have at least one `[Category/Page_Name]` citation from tool results. If a section has none, find the relevant citation from your tool results and add it.
+1. Call `review_plan(proposal, goal)` with the plan from Phase 1 to catch risks
+2. Identify the 2-4 most uncertain steps
+3. Call `search_knowledge` in **parallel** for each gap:
+   - Framework-specific API details
+   - Config format requirements
+   - Known pitfalls or gotchas
+   - Memory/compute estimation for the specific hardware
 
-- **Overview**: What we're building and why this approach
-- **Prerequisites**: Dependencies, hardware, API keys
-- **Numbered steps**: Each with specific tool/API/config and citations
-- **Validation criteria**: How to verify each step
-- **Risks**: Known pitfalls with mitigations
+**Gate**: Every step in the plan has either KB confirmation or an explicit "verify during dry-run" flag.
 
-## Output Format
+### Phase 3: Present — Structured Plan with Validation
+
+Compose the final plan:
 
 ```
 ## Plan: [Goal]
 
 ### Overview
-[1-2 sentences]
+[1-2 sentences: what we're building, why this approach]
 
 ### Prerequisites
-- [ ] ...
+- [ ] Hardware: [specific GPUs, RAM]
+- [ ] Dependencies: [packages with versions]
+- [ ] Data: [format, size, location]
 
 ### Steps
 1. **[Step name]** — [description] [PageID]
-   - Config: `...`
-   - Validate: [how to verify]
-
-2. ...
+   - Config: `key: value`
+   - Validate: [how to verify this step worked]
+   - Time estimate: [wall time]
 
 ### Risks & Mitigations
-- Risk: ... → Mitigation: ... [PageID]
+- Risk: [what could go wrong] → Mitigation: [specific action] [PageID]
+
+### Execution Strategy
+- Dry-run: [what to test on 1% of data first]
+- Checkpoint: [when to evaluate before continuing]
+- Success criteria: [specific metrics or behaviors]
 ```
+
+## After This
+
+Execute in phases: **dry-run on 1% data → 1 epoch → full run.**
+
+- Before running → invoke **ml-verify** to catch config mistakes
+- Log the experiment → invoke **ml-experiment** to track hypothesis and results
+- If any phase fails → invoke **ml-debug** with the error and plan context
+- After results → invoke **ml-iterate** if metrics aren't at target
+
+## Anti-Patterns
+
+| Mistake | Why it happens | What to do instead |
+|---------|---------------|-------------------|
+| Planning without memory estimation | "We'll figure out OOM at runtime" | Estimate GPU memory in the plan. Include per-step memory budget. |
+| Missing evaluation step | "We'll evaluate after training" | Build evaluation into the plan — what metrics, what threshold, what data |
+| Wrong parallelism for model size | "Just use FSDP for everything" | Check KB for model-size-specific parallelism recommendations |
+| No dry-run phase | "The config looks right" | Always plan a 10-step dry-run before committing GPU hours |
+| Skipping review_plan | "build_plan gave a good result" | review_plan catches risks that build_plan misses. Always run both. |
 
 ## Examples
 
-**"I want to fine-tune Qwen2.5-7B with QLoRA on 2xA100"**
+**"Fine-tune Qwen2.5-7B with QLoRA on 2xA100"**
 1. `build_plan("QLoRA fine-tuning Qwen2.5-7B", "2xA100 80GB, instruction tuning dataset")`
 2. `review_plan(plan_output, "QLoRA fine-tuning Qwen2.5-7B")`
-3. Parallel: `search_knowledge("Qwen2.5 QLoRA config format Axolotl")`, `search_knowledge("QLoRA memory estimation 7B model 2xA100")`
+3. Parallel: `search_knowledge("Qwen2.5 QLoRA target_modules config Axolotl")`, `search_knowledge("QLoRA memory estimation 7B model 2xA100")`
 
 **"Design a RAG system with hybrid retrieval"**
 1. `build_plan("RAG system with hybrid vector+BM25 retrieval", "FastAPI, ChromaDB, production-ready")`
