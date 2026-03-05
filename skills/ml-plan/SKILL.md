@@ -35,7 +35,9 @@ Call `build_plan(goal, constraints?)` IMMEDIATELY with the user's stated goal.
    - Framework-specific API details
    - Config format requirements
    - Known pitfalls or gotchas
+   - **Current API version** — library APIs change; verify the exact import paths and function signatures for the pinned version
    - Memory/compute estimation for the specific hardware
+   - **Compatibility caveats** — features that are version-dependent or have known workarounds (e.g., DeepSpeed ZeRO-3 + generation). State what works *now*, not what was true two versions ago.
 
 **Gate**: Every step in the plan has either KB confirmation or an explicit "verify during dry-run" flag.
 
@@ -51,14 +53,25 @@ Compose the final plan:
 
 ### Prerequisites
 - [ ] Hardware: [specific GPUs, RAM]
-- [ ] Dependencies: [packages with versions]
+- [ ] Dependencies: [packages with **pinned** versions — use `==`, not `>=`. Verify API compatibility: import paths and function signatures change across major versions]
+- [ ] Dependencies: minimize — don't add a library for a single function (e.g., `sklearn` for one metric). Inline or use stdlib when trivial.
 - [ ] Data: [format, size, location]
 
 ### Steps
 1. **[Step name]** — [description] [PageID]
+
+0. **Data Setup** — [ingestion, index creation, collection setup — don't assume infra exists]
+   - Validate: [query test data, verify row counts / index health]
    - Config: `key: value`
    - Validate: [how to verify this step worked]
-   - Time estimate: [wall time]
+   - Error handling: [what to catch, how to recover]
+   - Time estimate: [wall time + throughput estimate, e.g., tokens/sec or samples/hour]
+
+... [repeat for each step]
+
+N. **Export & Deploy** — [merge adapters / export model / package artifacts]
+   - Validate: [load exported model, run inference on test input]
+   - Artifacts: [what files are produced, where they go]
 
 ### Risks & Mitigations
 - Risk: [what could go wrong] → Mitigation: [specific action] [PageID]
@@ -87,6 +100,13 @@ Execute in phases: **dry-run on 1% data → 1 epoch → full run.**
 | Wrong parallelism for model size | "Just use FSDP for everything" | Check KB for model-size-specific parallelism recommendations |
 | No dry-run phase | "The config looks right" | Always plan a 10-step dry-run before committing GPU hours |
 | Skipping review_plan | "build_plan gave a good result" | review_plan catches risks that build_plan misses. Always run both. |
+| Custom data pipeline when native exists | "I'll write my own Dataset class" | Use the framework's native data loading first (e.g., LLaVA's pipeline, Axolotl's YAML datasets). Custom only when native can't handle your format. |
+| Using outdated library APIs | "The tutorial code works" | `search_knowledge` for the **pinned version's** API. Libraries like RAGAS, transformers, and vLLM break across major versions. Verify import paths and function signatures against the exact version in Prerequisites. |
+| No error handling in execution steps | "We'll deal with errors when they happen" | Every step that calls an API or runs training needs try/except with a recovery action (retry, checkpoint resume, graceful exit). |
+| Single-launcher execution scripts | "Everyone uses Slurm" | Provide launcher commands for both Slurm (`srun`/`sbatch`) and bare-metal (`torchrun`) setups. Not all clusters use the same scheduler. |
+| String parsing for routing decisions | "I'll use StrOutputParser for yes/no" | Use structured output (Pydantic models, tool calls, or JSON mode) for any LLM decision that controls flow — routing, grading, gating. String parsing breaks on minor output variations. |
+| Hardcoded thresholds and magic numbers | "I'll tune them later" | Put thresholds, retry limits, and quality gates in a config file (YAML/JSON) from the start. Hardcoded values resist tuning and A/B testing. |
+| Statistical methods with wrong assumptions | "temperature=0 measures self-consistency" | Verify that your methodology actually tests what you claim. Near-deterministic sampling can't measure variance; paired vs pooled statistics answer different questions. State assumptions explicitly in the plan. |
 
 ## Examples
 

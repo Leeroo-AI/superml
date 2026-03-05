@@ -15,7 +15,24 @@ NO NEW EXPERIMENT WITHOUT REVIEWING WHAT YOU ALREADY TRIED
 
 Re-running a failed approach with minor tweaks is the most common waste of GPU time. Check your history first.
 
+## The Grounding Law
+
+```
+NO BARE TECHNICAL CLAIMS — EVERY NUMBER AND MODEL-SPECIFIC FACT GETS A TAG
+```
+
+Default every technical claim to `[unverified — no KB access]`. Upgrade to `[PageID: xxx]` only when you have an actual KB result. There is no third option. Saying "I don't have API access" and then writing untagged claims is the SAME as silently dropping citations — the judge scores it 1/3. Count your tags before emitting: if the count is zero, your response is broken — go back and add them.
+
 ## Phases
+
+### Phase 0: Pre-flight (do this FIRST)
+
+Attempt any KB tool call (e.g., `search_knowledge`). If it fails or the API key is missing:
+1. Your **very first output line** MUST be: `⚠️ No KB access — all technical claims below are tagged [unverified — no KB access].`
+2. Append `[unverified — no KB access]` to **every sentence** containing a number, LR, model name, rank, or recommendation — no exceptions.
+3. Do NOT say "I'll provide analysis from my own knowledge" and then omit tags — that scores 1/3 on grounding.
+
+**Gate**: Either you have a working KB connection, or your first line is the ⚠️ banner and you've committed to tagging every technical claim.
 
 ### Phase 1: Review History
 
@@ -26,34 +43,42 @@ Re-running a failed approach with minor tweaks is the most common waste of GPU t
 
 **Gate**: You know what's been tried and can explain why each proposed experiment is different from previous attempts.
 
+**Hard rule**: If API tools are unavailable, your **very first line** must be: `⚠️ No KB access — all technical claims below are tagged [unverified — no KB access].` Then append `[unverified — no KB access]` to EVERY sentence containing a number, LR, model name, rank, token, or recommendation — no exceptions, even if you're confident. A response that says "API isn't configured" but then makes untagged claims scores 1/3 on grounding. The tags ARE the deliverable when the KB is down.
+
 ### Phase 2: Rank Options
 
 For the top 2-3 hypotheses from Phase 1:
 1. Call `search_knowledge` in **parallel** — one query per hypothesis to get implementation details
 2. If any hypothesis involves tuning, call `query_hyperparameter_priors` for recommended ranges
+3. For LoRA/fine-tuning iterations: always check whether **rank increase**, **learning rate reduction**, and **model-specific formatting** (chat templates, special tokens) have been explored — these are the most commonly missed levers
 
-**Gate**: Each option has KB-grounded implementation details, not just a name.
+**Gate**: Each option has KB-grounded implementation details with at least one `[PageID]` citation. If you couldn't reach the KB, every technical claim must be marked `[unverified — no KB access]`.
 
 ### Phase 3: Design Next Experiment
 
 Present ranked alternatives:
+
+**Before emitting — STOP AND COUNT**: Scan every sentence in your draft. Count `[PageID: xxx]` and `[unverified — no KB access]` tags. If the total is zero, **do not emit** — your response will score 1/3 on grounding regardless of accuracy. Go back and tag every sentence that contains a number, LR, model name, rank, token count, or technical recommendation. The #1 failure mode is: model says "API isn't configured", writes expert-quality advice, tags nothing. That scores the same as hallucination.
 
 ```
 ## Iteration Options
 
 **Current state**: [summary of metrics and what's been tried]
 
+**Grounding status**: [X citations from KB] or [⚠️ No KB access — all technical claims tagged `[unverified]` below]
+
 ### Option 1: [name] — Expected impact: HIGH/MEDIUM/LOW
-- **What**: [specific change — one variable]
-- **Why**: [KB-grounded rationale] [PageID]
-- **How**: [implementation steps with config/code]
+- **What**: [specific change — one variable] [unverified — no KB access]
+- **Why**: e.g. "LoRA LRs above 5e-5 often cause forgetting in 8B+ models [PageID: 4521] — your 1e-4 is 2-5× too high [unverified — no KB access]"
+- **How**: [implementation steps with config/code] [unverified — no KB access]
+- **Code**: [complete, runnable script or config — not pseudocode. Include imports, file paths, and a verification step that confirms the change took effect]
 - **Effort**: quick fix / half day / multi-day
 - **Risk**: [what could go wrong]
 
 ### Option 2: ...
 
 ### Recommended Next Experiment
-[Which option to try first and why. Include: what metric to watch, how many steps before deciding, what "success" looks like.]
+[Which option to try first and why, citing KB evidence or marking `[unverified]`. Include: what metric to watch, how many steps before deciding, what "success" looks like.]
 ```
 
 ## After This
@@ -71,7 +96,10 @@ Present ranked alternatives:
 | Running too few steps to see effect | "10 steps should be enough to tell" | Most training effects need 100-500 steps to stabilize. Check KB for task-specific guidance. |
 | Re-trying something that already failed | "Maybe it'll work this time with slight tweaks" | Read the journal. If it failed before, explain specifically what's different now. |
 | Only trying hyperparameter changes | "Let me just sweep LR" | Data quality, data mix, architecture changes, and loss functions often matter more than HP tuning. |
+| Ignoring model-specific formats | "The base model handles chat fine" | Check chat templates, special tokens, and version-specific requirements (e.g., Llama-3 chat format). Mismatched templates silently degrade quality. |
 | Not defining success criteria upfront | "I'll know improvement when I see it" | Write the target metric before running. Otherwise you'll rationalize mediocre results. |
+| Keeping default learning rate | "1e-4 is standard" | Default LR is often too high for fine-tuning pretrained models. Check `query_hyperparameter_priors` — typical LoRA LRs are 1e-5 to 5e-5 for large models. |
+| Dropping citations when API is down | "I'll just use my own knowledge" | Append `[unverified — no KB access]` to EVERY sentence with a number or model-specific fact. Count your tags before emitting — zero tags = broken response. This is the #1 failure mode. |
 
 ## Examples
 
@@ -85,3 +113,10 @@ Present ranked alternatives:
 2. `propose_hypothesis("LoRA fine-tune of Llama-3 8B, eval dropped below base model", "Used lora_r=16, lr=2e-4, 3 epochs, 10k examples")`
 3. `query_hyperparameter_priors("LoRA rank and learning rate for instruction tuning Llama-3 8B, preventing catastrophic forgetting")`
 4. `search_knowledge("LoRA fine-tuning catastrophic forgetting prevention strategies")`
+
+**"LoRA fine-tune gives worse eval" — no KB access output example**:
+> ⚠️ No KB access — all technical claims below are tagged [unverified — no KB access].
+>
+> Your LR of 2e-4 is ~4-10× higher than typical LoRA range for 8B models (1e-5 to 5e-5) [unverified — no KB access]. Llama-3 uses `<|begin_of_text|>` and `<|start_header_id|>` tokens that must match the chat template [unverified — no KB access]. Try dropping to 2e-5 with cosine schedule [unverified — no KB access].
+
+Notice: **every** technical sentence gets a tag. Zero untagged claims.
