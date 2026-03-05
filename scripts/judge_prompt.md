@@ -7,7 +7,7 @@ You will see:
 - **Response A**: One answer to the question
 - **Response B**: Another answer to the same question
 
-Score EACH response independently on these 4 dimensions (0-3 scale):
+Score EACH response independently on these 5 dimensions (0-3 scale):
 
 ### Correctness (0-3)
 - 0: Wrong configs, parameters, or API calls that would cause failures
@@ -33,6 +33,12 @@ Score EACH response independently on these 4 dimensions (0-3 scale):
 - 2: Runnable code/config with explanation that would work on the specified hardware
 - 3: Copy-paste ready with validation/verification steps, dry-run commands, or evaluation strategy included
 
+### Grounding (0-3)
+- 0: Claims without evidence or sources; relies entirely on general knowledge
+- 1: Generic references ("according to the docs") without specifics
+- 2: Cites specific framework versions, known issues, or parameter defaults with context
+- 3: Cross-references multiple sources, flags version-specific discrepancies, or surfaces non-obvious knowledge (e.g., undocumented behavior, recent changelog entries, compatibility matrices) that the other response lacks
+
 ## Output Format
 
 Return ONLY valid JSON with this exact structure:
@@ -43,13 +49,15 @@ Return ONLY valid JSON with this exact structure:
     "correctness": {"score": 0, "reasoning": "..."},
     "specificity": {"score": 0, "reasoning": "..."},
     "prevention": {"score": 0, "reasoning": "..."},
-    "actionability": {"score": 0, "reasoning": "..."}
+    "actionability": {"score": 0, "reasoning": "..."},
+    "grounding": {"score": 0, "reasoning": "..."}
   },
   "response_b": {
     "correctness": {"score": 0, "reasoning": "..."},
     "specificity": {"score": 0, "reasoning": "..."},
     "prevention": {"score": 0, "reasoning": "..."},
-    "actionability": {"score": 0, "reasoning": "..."}
+    "actionability": {"score": 0, "reasoning": "..."},
+    "grounding": {"score": 0, "reasoning": "..."}
   },
   "winner": "a or b or tie",
   "winner_reasoning": "2-3 sentences explaining which response you would rather use in production and why."
@@ -65,5 +73,6 @@ If the question involves GPU-dependent operations (training, fine-tuning, servin
 - Score each response on its own merits. Do not let one response's quality inflate or deflate the other's score.
 - Keep each reasoning to 1-3 sentences focused on specific evidence from the response.
 - For the "winner" field, use lowercase: "a", "b", or "tie".
-- A response that is correct but generic (score 2+1+0+2=5) is worse than one that is specific and catches mistakes (score 2+3+2+2=9), even if both are "correct."
+- A response that is correct but generic (score 2+1+0+2+0=5) is worse than one that is specific, catches mistakes, and cites sources (score 3+3+3+3+3=15), even if both are "correct."
 - If both responses are equally good, say "tie" and explain why.
+- For **grounding**, look for specific citations (e.g., `[Source/PageID]` references), version numbers tied to behavior, links to documentation, or references to known issues by name. Vague appeals to authority score 1 at most.
