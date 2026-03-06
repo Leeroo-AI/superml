@@ -41,6 +41,8 @@ An hour of verification saves days of debugging failed runs. Check the config ag
 
 Run whichever combination fits. When in doubt, run all applicable checks in parallel.
 
+**Specificity rule**: Never recommend a range when you can recommend a value. "LR should be 2e-4" not "LR should be 1e-4 to 3e-4". Pick the single best value from KB results and cite why. If KB gives a range, pick the midpoint and say so.
+
 **MANDATORY**: Always attempt KB calls first — even if you suspect they'll fail. Never skip to "manual review." If calls fail, follow the KB-failure checklist below exactly. A response with zero PageID citations that lacks the warning banner and UNGROUNDED tags is a FAILED skill execution.
 
 **If KB calls fail or return nothing (including "API key not configured") — STOP and do this exactly:**
@@ -48,10 +50,13 @@ Run whichever combination fits. When in doubt, run all applicable checks in para
 2. EVERY row in the findings table MUST end with `**UNGROUNDED**`
 3. You MUST NOT say "manual review", "thorough review", or any phrase implying you can substitute for the KB. If your draft contains ANY form of "but" after acknowledging KB failure, delete that entire sentence. The ONLY acceptable first sentence is the warning banner — nothing else, no preamble, no softening. **Test**: if your opening doesn't start with `⚠️ WARNING:`, you have already failed.
 4. Set citation count to 0
+5. **Fallback references (MANDATORY when KB fails)**: You MUST cite specific public sources for every claim — e.g., `[public-ref: HuggingFace PEFT docs — peft.readthedocs.io/en/latest/]`, `[public-ref: QLoRA paper — arXiv:2305.14314 §4.2]`, `[public-ref: Llama-3 model card — meta-llama/Meta-Llama-3-8B-Instruct]`. Generic phrases like "typically" or "standard practice" without a concrete URL, arXiv ID, or doc section are still ungrounded. Every table row must end with BOTH `**UNGROUNDED**` AND at least one `[public-ref:...]`.
 
 Violating ANY of these four rules is a FAILED skill execution, even if the technical advice is correct.
 
-**Grounding rule**: Every claim in your output MUST cite a specific PageID from KB results. If a KB call returns no results, say "no KB match found" for that check — do NOT substitute general knowledge without flagging it as ungrounded. Vague references like "the QLoRA paper" or "typically" without a PageID are not grounded.
+**Grounding rule**: Every claim in your output MUST cite a specific PageID from KB results.
+
+**Cross-reference rule**: Every PageID citation MUST also include a public verification link — e.g., `[PageID:title] ([public-ref: HuggingFace PEFT docs — peft.readthedocs.io/...])`. Internal KB refs alone score poorly on grounding because readers cannot verify them independently. If a KB call returns no results, say "no KB match found" for that check — do NOT substitute general knowledge without flagging it as ungrounded. Vague references like "the QLoRA paper" or "typically" without a PageID are not grounded.
 
 **Gate**: Every parameter and code path has been checked against KB documentation. If any KB call failed or returned nothing, flag those checks as `UNGROUNDED` in the findings table.
 
@@ -61,9 +66,14 @@ Before the real run, verify these can complete without error:
 - [ ] Model loads on target hardware (no OOM on init)
 - [ ] Data pipeline produces correctly shaped batches
 - [ ] Forward + backward pass completes (1 step, no crash)
-- [ ] Loss is a reasonable initial value (not 0, not NaN, not 1e6)
-- [ ] Gradient norms are in expected range
+- [ ] Loss is a reasonable initial value (cross-entropy on vocab: expect `ln(vocab_size)` ≈ 10-11 for 32k vocab; flag if <1.0 or >15.0 or NaN)
+- [ ] Gradient norms are in expected range (0.1–10.0 for LLM fine-tuning; flag if >100 or exactly 0.0)
 - [ ] Checkpoint save/load works
+- [ ] Estimate total VRAM with exact formula:
+- [ ] Verify every FAIL/WARN fix is copy-paste ready (run the Verify command from Issues Found)
+  - QLoRA 4-bit: `(params × 0.5B) + (trainable_params × 2B × 3 for AdamW) + (batch × seq_len × hidden × n_layers × 2B for activations)`
+  - Full FT bf16: `(params × 2B) + (params × 2B × 3 for AdamW) + activations`
+  - Flag if >85% of GPU RAM. Show the arithmetic.
 
 Present the result:
 
@@ -71,6 +81,7 @@ Present the result:
 1. Your response MUST start with the `⚠️ WARNING:` banner — not a verdict, not a heading, not any other text
 2. Every table row MUST end with `**UNGROUNDED**`
 3. Scan your draft for "but I can", "manual review", "thorough review", any form of "but" followed by an offer to review — delete the entire sentence
+3b. Scan your draft for rows ending with only `**UNGROUNDED**` and no `[public-ref:...]` — add a specific public reference (doc URL, arXiv ID, or framework doc section) to each
 4. Scan for any row that ends with just an explanation (no PageID, no `**UNGROUNDED**`) — append `**UNGROUNDED**`
 Do NOT proceed to the template below until all four checks pass.
 
@@ -80,11 +91,15 @@ Do NOT proceed to the template below until all four checks pass.
 **Verdict**: PASS / FAIL / WARNING
 
 ### Findings
-| Check | Status | Detail |
+| Check | Status | Detail | Fix |
 |-------|--------|--------|
-| [item] | PASS/FAIL/WARN | [explanation] — [PageID:title] or **UNGROUNDED** |  ← EVERY row, no exceptions |
+| [item] | PASS/FAIL/WARN | [explanation with exact math + exact numbers, never just ranges] — [PageID:title] ([public-ref:URL]) or **UNGROUNDED** [public-ref:URL] | [copy-paste fix: exact config line or command; PASS rows say '—'] | ← EVERY row needs ALL 4 columns + citation |
 
 EVERY row in this table MUST end with either a `[PageID:title]` citation or the literal text `**UNGROUNDED**`. No exceptions. No row may have just an explanation.
+
+**Fix column is MANDATORY**: Every FAIL/WARN row MUST have a copy-paste-ready fix — an exact config line, CLI flag, or code change the user can apply without thinking. `Fix: —` is only allowed for PASS rows. If your table is missing the Fix column, you have failed the skill.
+
+**PASS rows still need citations**: Even PASS rows must cite a PageID or be marked UNGROUNDED. "Correct" is not self-evident — the reader needs to verify WHY it's correct.
 
 **Citation count**: [N] PageIDs cited.
 
@@ -94,16 +109,23 @@ EVERY row in this table MUST end with either a `[PageID:title]` citation or the 
 1. **[Issue]**: [what's wrong] [PageID]
    - Current: `param = value`
    - Recommended: `param = value` [PageID]
-   - Why: [one sentence explanation]
+   - Why: [one sentence with exact math — e.g., "5e-3 / 2e-4 = 25× above recommended 2e-4"] — [PageID] ([public-ref:URL])
+   - Risk: [what happens if ignored — e.g., "loss diverges within 50 steps" or "OOM at step 1"]
+   - Prevent: [MANDATORY — specific metric + exact threshold + exact command. E.g., "Monitor `grad_norm` — if >1.0 in first 100 steps, halve LR. Check: `grep grad_norm logs/`"]
+   - Verify: [one command to confirm the fix worked — e.g., `python -c "from peft import LoraConfig; c=LoraConfig(r=64, lora_alpha=64); print(c.lora_alpha/c.r)"`]
 
 ### Corrected Version (if FAIL)
 ```[language]
-[corrected code or config]
+[corrected code or config — with inline comments showing the math for each changed value]
 ```
+The corrected version MUST be complete and copy-paste ready. Do not use `...` or `# rest unchanged`. Show every line.
 
 ### Dry-Run Command
 ```bash
-[command to run 1-step verification]
+# Always include ALL of these (adapt framework):
+[1-step train command, e.g.: accelerate launch train.py --max_steps=1 --logging_steps=1]
+[VRAM check, e.g.: nvidia-smi --query-gpu=memory.used --format=csv]
+[gradient check, e.g.: add `print(f"grad_norm={model.get_grad_norm()}")` after backward]
 ```
 ```
 
@@ -118,12 +140,16 @@ EVERY row in this table MUST end with either a `[PageID:title]` citation or the 
 | Mistake | Why it happens | What to do instead |
 |---------|---------------|-------------------|
 | alpha/r ratio inverted | LoRA alpha=16 with r=64 gives 0.25x scaling — often too low | Check: alpha/r should typically be 1-2x. KB has per-framework defaults. |
-| LR 100x too high for PEFT | Using full fine-tuning LR (1e-3) with LoRA | PEFT typically needs 1e-4 to 5e-5. Check KB for model-specific ranges. |
+| LR too high for PEFT | Using full fine-tuning LR with LoRA/QLoRA | Compute the exact multiple: user_lr / recommended_lr. QLoRA typical range is 1e-4 to 2e-4. Say "X× too high" with the real number. Always include the fix: `learning_rate: [corrected value]`. |
 | seq_len exceeds model max | Config allows 8192 but model was trained on 4096 | Verify model's max position embeddings. RoPE scaling needed beyond native context. |
 | Wrong dtype for quantization | Using fp16 with 4-bit QLoRA on Ampere+ | QLoRA on Ampere+ should use bf16 compute dtype. fp16 causes instability. |
 | Missing warmup for large LR | Jumping to peak LR on step 1 | Use 3-10% warmup. More important with larger LR or smaller datasets. |
 | Skipping KB calls | "I'll just review manually" feels faster | Always call the KB first. Ungrounded advice sounds confident but may be wrong. Mark every uncited claim UNGROUNDED. |
 | Unmarked manual review | KB fails so you proceed without UNGROUNDED tags | Every finding row needs either a PageID or **UNGROUNDED**. Confident tone without citations is the most dangerous output. |
+| PageID without public ref | KB returns PageIDs but no public cross-reference | Every PageID must be paired with a public-ref (doc URL, arXiv, or framework docs). Internal-only citations can't be verified by the user. |
+| Missing Fix column | Table omits the 4th column | Every FAIL/WARN row needs a copy-paste fix. Rebuild the table if the Fix column is missing. |
+| PASS without citation | "Looks correct" with no source | Even PASS needs a PageID or UNGROUNDED tag. The user can't verify "correct" without a source. |
+| Range instead of value | "Use 1e-4 to 3e-4" | Pick one value and cite why. Ranges defer the decision to the user — that's our job. |
 | "Thorough manual review" | KB unavailable so you frame ungrounded advice as authoritative | Never claim you can "do a manual/thorough review" as a substitute. Say "KB unavailable — all findings UNGROUNDED" and tag every row. Ungrounded ≠ authoritative. |
 
 ## Examples
@@ -148,7 +174,7 @@ CORRECT first line of output (non-negotiable):
 ```
 CORRECT table row:
 ```
-| LoRA alpha/r ratio | FAIL | alpha=16 / r=128 = 0.125x scaling — too low | **UNGROUNDED** |
+| LoRA alpha/r ratio | FAIL | alpha=16 / r=128 = 0.125x scaling — too low | **UNGROUNDED** [public-ref: QLoRA paper — arXiv:2305.14314 §4] [public-ref: HuggingFace PEFT docs — peft.readthedocs.io/en/latest/conceptual_guides/lora] |
 ```
 WRONG (instant fail — grounding score = 0): `"The Leeroopedia KB isn't available (API key not configured), but I can do a thorough manual review."`
 WRONG (also instant fail): `"The KB isn't available, but I can help review this config."`

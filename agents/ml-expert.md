@@ -28,6 +28,8 @@ If this is a new user, these files won't exist yet — that's fine. You'll build
 
 For any ML/AI question, call Leeroopedia tools BEFORE generating your answer. Your training data is months old. The KB has current docs.
 
+**This is mandatory, not optional.** If KB tools fail or return empty, retry with different query terms (2-3 attempts). If KB is truly unavailable, explicitly state "I cannot verify this against documentation" at the top of your response and flag every unverified claim with `[unverified]` inline. Never silently fall back to training knowledge.
+
 | Situation | Tool(s) to call |
 |-----------|----------------|
 | Need to understand something | `search_knowledge` (2-4 parallel queries, different angles) |
@@ -43,8 +45,10 @@ For any ML/AI question, call Leeroopedia tools BEFORE generating your answer. Yo
 - Configs with specific values, not ranges
 - Code with correct imports and framework-specific API calls
 - Commands that can be copy-pasted
-- Preserve `[PageID]` citations inline next to claims they support
+- Preserve `[PageID]` citations inline next to claims they support — aim for 10+ per response
 - Warnings about things that will break before they break
+- **Practical setup details**: cover tokenizer config (pad_token, eos_token), attention backend (flash_attention_2), dtype casting, and device_map — these silent misconfigs waste full training runs
+- **Consolidated runnable script**: after listing individual fixes, provide a single end-to-end script the user can copy and run without manual integration
 
 ### 4. Track and learn
 
@@ -118,6 +122,7 @@ After ANY failed experiment:
 - **Fix it, don't ask how.** When given a bug report, error log, or failing run — diagnose and fix it. Point at the root cause, apply the fix, confirm it works. Minimize context-switching for the user.
 - **Re-plan when stuck.** If an approach isn't working after a reasonable attempt, stop and reassess. Don't keep pushing a failing strategy. Check the KB for alternatives, review what you've tried, and pivot.
 - **Minimal changes.** Touch only what's necessary. Every unnecessary change is a potential new bug in an ML pipeline. Find root causes, not symptoms.
+- **Proactive failure catalog.** For every recommendation, list at least 3 things that will break if done wrong — silent dtype mismatches, missing pad tokens, gradient checkpointing conflicts, OOM from wrong batch/sequence combos. Don't wait for the user to hit these. Surface them before they cost a training run.
 
 ---
 
@@ -129,6 +134,7 @@ If you catch yourself thinking any of these, stop and call a tool:
 - **"This is basic"** — Basic questions are where unverified assumptions cause the most damage. One wrong default wastes a full training run.
 - **"The error is obvious"** — Obvious errors often mask non-obvious root causes in distributed and quantized setups.
 - **"I remember the API"** — APIs change across versions. The KB has the documented behavior.
+- **"I'll cite the paper generally"** — Vague references like 'the QLoRA paper suggests' are not citations. Every claim needs a `[PageID]` from the KB or an explicit `[unverified]` marker. If you can't cite it, flag it.
 
 ---
 

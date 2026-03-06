@@ -27,11 +27,15 @@ Call `build_plan(goal, constraints?)` IMMEDIATELY with the user's stated goal.
 
 **Gate**: You have a KB-grounded plan with numbered steps and validation criteria before proceeding.
 
+> **Citation rule**: Every step in the plan MUST include at least one `[PageID]` from `build_plan` output. If a step has no citation, call `search_knowledge` for that topic before presenting.
+>
+> **Version rule**: When citing a library or framework, include the **pinned version** next to the citation — e.g., `[PageID] (transformers 4.37.2)`. This lets the user verify the citation matches their dependency versions. When a KB page describes version-specific behavior or breaking changes, surface the version boundary explicitly — e.g., "as of v2.0; v1.x used a different API".
+
 ### Phase 2: Validate — Review and Gap-Fill
 
 1. Call `review_plan(proposal, goal)` with the plan from Phase 1 to catch risks
 2. Identify the 2-4 most uncertain steps
-3. Call `search_knowledge` in **parallel** for each gap:
+3. Call `search_knowledge` in **parallel** for each gap (cite every result as `[PageID]` in the final plan):
    - Framework-specific API details
    - Config format requirements
    - Known pitfalls or gotchas
@@ -40,6 +44,12 @@ Call `build_plan(goal, constraints?)` IMMEDIATELY with the user's stated goal.
    - **Compatibility caveats** — features that are version-dependent or have known workarounds (e.g., DeepSpeed ZeRO-3 + generation). State what works *now*, not what was true two versions ago.
 
 **Gate**: Every step in the plan has either KB confirmation or an explicit "verify during dry-run" flag.
+
+> **Code correctness gate**: Before presenting any code block, mentally trace it with a concrete input. Check: (1) variable names match across lines, (2) return types match what the caller expects, (3) set/list operations use the right identity check (`==` not `id()`), (4) no duplicate class/function definitions across steps, (5) callback/metric functions return the type the framework expects (e.g., DSPy metrics must return `bool` when `trace is not None` for bootstrapping; structured output params must match the SDK — `output_schema` ≠ `output_format`). If you spot an inconsistency, fix it before presenting.
+
+> **Correctness gate**: For any step that involves an SDK or library API, you MUST call `search_knowledge("[library] [function] API signature [version]")` and include the verified import path, function signature, and **exact parameter names** in the plan. Do NOT guess APIs from memory — parameter names differ across SDKs (e.g., `output_schema` vs `output_format`, `initialize()` args vs `Trainer` args). When two APIs overlap in purpose, verify which one the code actually uses and remove the other.
+
+> **Numerical gate**: For any throughput, memory, or time estimate, show the arithmetic in the plan. Call `search_knowledge("[hardware] [model size] benchmark throughput")` to ground estimates in measured data, not intuition.
 
 ### Phase 3: Present — Structured Plan with Validation
 
@@ -59,13 +69,18 @@ Compose the final plan:
 
 ### Steps
 1. **[Step name]** — [description] [PageID]
+   - Code: ```[language]\n[complete, runnable snippet — all imports, all args, all config. User should copy-paste and run with zero edits except paths/keys. For multi-step agents/pipelines: show how state (variables, history, connections) flows between steps — never silently discard intermediate results. NO stubs, NO `NotImplementedError`, NO `pass` placeholders, NO `# TODO` — if you can't write the full implementation, call `search_knowledge` until you can.]\n```
+   - Concrete params: [every hyperparameter, threshold, batch size, model name as a specific value — not "tune this" or "adjust as needed". Show why that value: e.g., `batch_size=4  # 7B model × 4 = ~72GB on 2×A100-80GB`]
 
 0. **Data Setup** — [ingestion, index creation, collection setup — don't assume infra exists]
-   - Validate: [query test data, verify row counts / index health]
+   - Preprocessing: `[exact shell command or script to transform raw data → training format]`
+   - Validate: [query test data, verify row counts / index health — write the actual validation function, not a placeholder]
    - Config: `key: value`
    - Validate: [how to verify this step worked]
-   - Error handling: [what to catch, how to recover]
-   - Time estimate: [wall time + throughput estimate, e.g., tokens/sec or samples/hour]
+   - Warnings: [what can silently go wrong — e.g., sycophantic judges, silent dtype downcasts, version-specific API breaks. At least one warning per step that calls an external API or runs training.]
+   - Error handling: [specific exception class to catch, exact recovery action — e.g., `except torch.cuda.OutOfMemoryError: reduce batch_size by half and retry`]
+   - Limitations: [what this step does NOT handle — e.g., "blocklist does not prevent all write methods", "sandbox has no internet access". At least one honest limitation per step that involves security, sandboxing, or external services.]
+   - Time estimate: [wall time + throughput estimate with **show-your-work math** — e.g., `3B params × 2 FLOPs/param × 200B tokens ÷ (32 GPUs × 312 TFLOPS × 0.45 MFU) = X hours`. Never state throughput without the calculation backing it.]
 
 ... [repeat for each step]
 
@@ -73,13 +88,15 @@ N. **Export & Deploy** — [merge adapters / export model / package artifacts]
    - Validate: [load exported model, run inference on test input]
    - Artifacts: [what files are produced, where they go]
 
+**Launcher note**: Provide launch commands for **both** Slurm (`sbatch`/`srun`) and bare-metal (`torchrun`/`accelerate launch`) when the plan involves multi-node or multi-GPU execution.
+
 ### Risks & Mitigations
 - Risk: [what could go wrong] → Mitigation: [specific action] [PageID]
 
 ### Execution Strategy
 - Dry-run: [what to test on 1% of data first]
 - Checkpoint: [when to evaluate before continuing]
-- Success criteria: [specific metrics or behaviors]
+- Success criteria: [specific metrics with numeric thresholds — e.g., "recall@10 ≥ 0.85 on held-out test set" not just "good retrieval quality"]
 ```
 
 ## After This
@@ -100,13 +117,18 @@ Execute in phases: **dry-run on 1% data → 1 epoch → full run.**
 | Wrong parallelism for model size | "Just use FSDP for everything" | Check KB for model-size-specific parallelism recommendations |
 | No dry-run phase | "The config looks right" | Always plan a 10-step dry-run before committing GPU hours |
 | Skipping review_plan | "build_plan gave a good result" | review_plan catches risks that build_plan misses. Always run both. |
-| Custom data pipeline when native exists | "I'll write my own Dataset class" | Use the framework's native data loading first (e.g., LLaVA's pipeline, Axolotl's YAML datasets). Custom only when native can't handle your format. |
-| Using outdated library APIs | "The tutorial code works" | `search_knowledge` for the **pinned version's** API. Libraries like RAGAS, transformers, and vLLM break across major versions. Verify import paths and function signatures against the exact version in Prerequisites. |
+| Custom data pipeline when native exists | "I'll write my own Dataset class" | Use the framework's native data loading first (e.g., LLaVA's pipeline, Axolotl's YAML datasets). Custom only when native can't handle your format. Call `search_knowledge("[framework] native data pipeline")` to confirm the native path before writing custom code. |
+| Using outdated or misremembered APIs | "The tutorial code works" / "I've seen this param before" | `search_knowledge` for the **pinned version's** API. Verify exact parameter names, not just function names — e.g., `output_schema` ≠ `output_format`. If two initialization paths exist (e.g., `Trainer` vs manual loop), pick ONE and remove the other. |
 | No error handling in execution steps | "We'll deal with errors when they happen" | Every step that calls an API or runs training needs try/except with a recovery action (retry, checkpoint resume, graceful exit). |
 | Single-launcher execution scripts | "Everyone uses Slurm" | Provide launcher commands for both Slurm (`srun`/`sbatch`) and bare-metal (`torchrun`) setups. Not all clusters use the same scheduler. |
 | String parsing for routing decisions | "I'll use StrOutputParser for yes/no" | Use structured output (Pydantic models, tool calls, or JSON mode) for any LLM decision that controls flow — routing, grading, gating. String parsing breaks on minor output variations. |
 | Hardcoded thresholds and magic numbers | "I'll tune them later" | Put thresholds, retry limits, and quality gates in a config file (YAML/JSON) from the start. Hardcoded values resist tuning and A/B testing. |
 | Statistical methods with wrong assumptions | "temperature=0 measures self-consistency" | Verify that your methodology actually tests what you claim. Near-deterministic sampling can't measure variance; paired vs pooled statistics answer different questions. State assumptions explicitly in the plan. |
+| Unverified model/endpoint names | "rerank-v4.0-pro should exist" | Call `search_knowledge("[provider] [model] available models")` for every model name, endpoint, or API version. If the KB can't confirm it exists, mark it `[UNVERIFIED]` and provide a fallback (e.g., `rerank-v3.5` as known-good). |
+| Presenting code sketches as plans | "The user can fill in the rest" | Every code block in the plan must be complete and runnable. If you can't write the full code, call `search_knowledge` until you can. Incomplete snippets waste more time than thorough planning. |
+
+| Importing from private/internal paths | "It works in my version" | Never import from `_private` or undocumented submodules (e.g., `ragas._faithfulness`). Use only the public API surface. If the public API is missing a feature, note it as a limitation rather than reaching into internals that break across minor versions. |
+| Plan steps without citations | "The KB didn't have this topic" | If `build_plan` didn't cite a step, call `search_knowledge` for it. If the KB truly has no info, mark the step `[UNVERIFIED — test in dry-run]` so the user knows the risk. |
 
 ## Examples
 
@@ -119,3 +141,5 @@ Execute in phases: **dry-run on 1% data → 1 epoch → full run.**
 1. `build_plan("RAG system with hybrid vector+BM25 retrieval", "FastAPI, ChromaDB, production-ready")`
 2. `review_plan(plan_output, "Hybrid RAG system")`
 3. Parallel: `search_knowledge("ChromaDB hybrid retrieval BM25 integration")`, `search_knowledge("RAG evaluation metrics recall@k RAGAS")`
+4. For any step missing a `[PageID]`: `search_knowledge("[step topic] [framework] [version]")` until every step is cited
+5. Present plan with runnable code per step — no pseudocode, no "fill in here"

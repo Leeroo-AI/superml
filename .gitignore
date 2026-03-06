@@ -4,3 +4,5 @@
 __pycache__/
 node_modules/
 test-logs/
+.env
+scripts/generate_upload_url.py

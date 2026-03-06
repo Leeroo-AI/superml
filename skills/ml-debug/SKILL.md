@@ -89,19 +89,26 @@ Before choosing a fix, ask: **What is the least destructive intervention?** Pref
 
 When multiple hypotheses exist, **order by diagnostic cost**: test the hypothesis that takes minutes (e.g., check `git diff`, inspect data, do arithmetic on step counts) before the one that requires a full training run. If simple arithmetic (e.g., steps × batch_size = dataset_size) explains the symptom, lead with that — don't bury it as a fallback behind a speculative mechanism. **Verify your arithmetic end-to-end**: if you claim "epoch ends at step N, so step M is the boundary", check that M actually equals N — off-by-one or rounding errors in your own math undermine the diagnosis.
 
+**Grounding depth rule**: When citing KB sources, prefer citations that include version-specific details (changelogs, config schemas, API signatures) over general principle citations. If a KB result contains a specific version note or API detail, surface it in your response — e.g., "parameter `X` was renamed to `Y` in v0.5.0 [PageID]" is stronger grounding than "see [PageID] for details". Cross-reference multiple KB sources when available to strengthen confidence.
+
+**Citation extraction rule**: When a KB call returns results, extract and quote the specific relevant detail — don't just append a `[PageID]`. BAD: "Speculative decoding helps here [PageID]" GOOD: "Speculative decoding generates N tokens per draft step, reducing decode passes by ~4× for acceptance rate >0.7 [PageID]". The citation must add information the reader can verify, not just authority.
+
 ### Phase 3: Fix + Verify
 
 1. Apply the fix — provide specific config changes, code patches, or commands
-2. Include a verification step: "Run 10 steps and confirm [specific behavior]"
-3. For serving/inference fixes: use a structured load test (not just manual curl) to validate latency/throughput claims
-4. Double-check generated CLI commands for duplicate flags, deprecated options, and version-specific syntax
-5. For config-heavy fixes (DeepSpeed, vLLM, Megatron): call `search_knowledge()` to verify the exact config key names and structure for the user's version — config schemas change across versions and wrong keys silently do nothing
+2. Include a **runnable verification script** — not just prose instructions. For training: a code block that runs N steps and prints the metric to check. For serving: an async load-test script that measures p50/p95/p99 under concurrent load (not just a single curl). Single-request latency checks are insufficient for serving fixes.
+3. **Correctness gate**: Before presenting any fix, verify every API call, import, and config key against KB results. Call `search_knowledge()` for any function signature or parameter you're unsure about. Wrong API calls (e.g., nonexistent methods, swapped argument order, deprecated parameters) are worse than no fix — they waste the user's time debugging YOUR code.
+4. For serving/inference fixes: use a structured load test (not just manual curl) to validate latency/throughput claims
+5. Double-check generated CLI commands for duplicate flags, deprecated options, and version-specific syntax
+6. For config-heavy fixes (DeepSpeed, vLLM, Megatron): call `search_knowledge()` to verify the exact config key names and structure for the user's version — config schemas change across versions and wrong keys silently do nothing
 3. If the fix involves hyperparameters, include the recommended range from KB
 4. Every fix action MUST cite a `[PageID]` — if you cannot cite one, call `search_knowledge()` for that specific fix before presenting it
 5. Pin the framework version in every fix AND diagnosis: state the exact version tested (e.g., `vLLM 0.4.1`, `transformers 4.41.0`) in both the Diagnosis and Fix sections — config keys, CLI flags, and internal behaviors change across versions, and unversioned advice is unverifiable. In KB-Unavailable mode, still state the version but mark it `[no KB]` if you cannot verify it against documentation
 4. For serving/inference fixes, also check: KV cache dtype (FP8 KV cache as a lighter alternative to full model quantization), chunked prefill settings, and prefix caching — these are orthogonal optimizations that may solve the problem with less risk than full-model quantization
 5. For OOM fixes, also check secondary memory optimizations: `double_quant` for QLoRA, gradient checkpointing granularity, FSDP as alternative to DeepSpeed — mention at least one alternative approach
 6. When providing inspection/debugging code, use the actual framework APIs (e.g., `trainer.get_train_dataloader()` not a manually reconstructed DataLoader) — generic recreations won't reproduce the exact behavior
+7. **Parameter class verification**: Before referencing any config parameter (e.g., `max_seq_length`), verify which class it belongs to (e.g., `SFTTrainer` vs `TrainingArguments`). Misattributing a parameter to the wrong class is a correctness error — the user will put it in the wrong place and it will silently do nothing.
+8. **Memory arithmetic for OOM fixes**: Always include explicit per-GPU memory math (model params + optimizer states + activations + KV cache + overhead) so the user can verify the fix will actually fit. Show the calculation, don't just assert "this will fit".
 
 **Pre-output self-check (mandatory before writing the response below)**:
 1. Count your `[PageID]` citations. If zero → you MUST use the KB-Unavailable format from Phase 1. Stop and rewrite.
@@ -120,19 +127,24 @@ Present the result:
 **Evidence**: [what in the logs/symptoms points to this]
 
 ### Fix
-1. [specific action with exact config/code] [PageID or `[no KB]`]
+1. [specific action with exact config/code — include exact values, not ranges] [PageID or `[no KB]`]
 2. [verification step — how to confirm the fix worked]
+
+**Actionability rule**: Every fix step must be copy-paste-ready. "Increase X" is not a fix — "Set X=128 (was 64)" is. "Try a smaller batch size" is not a fix — "Set per_device_train_batch_size=2 with gradient_accumulation_steps=8" is. If you write a fix step that contains the word "try" or "consider" without a concrete value, rewrite it.
 
 ### Consolidated Config
 ```
-[copy-paste-ready final config with all changes applied — not scattered across explanation]
+[copy-paste-ready final config with ALL changes applied in one block — user should need to copy exactly ONE config block, not assemble pieces from multiple sections. Include comments showing what changed and why: `# was 256, lowered to prevent over-batching during speculation`]
 ```
 
 ### If That Doesn't Work
 - Alternative cause: [what else it could be] → Try: [next diagnostic step] [PageID]
 
 ### Prevention
-- [how to catch this earlier next time] [PageID]
+- [specific monitoring command with exact threshold — e.g., `assert torch.cuda.max_memory_allocated() < 0.95 * torch.cuda.get_device_properties(0).total_memory` or `if expert_util.min() < 0.05: alert()`] [PageID]
+- [runnable guard script or config flag that catches recurrence — e.g., `--log-expert-utilization --alert-threshold=0.05`] [PageID]
+
+**Prevention quality gate**: Each prevention item must include either (a) a specific numeric threshold, (b) a runnable command/script, or (c) a config flag with its exact value. "Monitor loss curves" and "use checkpoints regularly" are NOT prevention — they are generic advice that would appear in any debugging guide. Prevention must be specific to THIS failure mode.
 ```
 
 ## After This
@@ -158,6 +170,9 @@ Present the result:
 | Recommending quantization without checking hardware support | FP8 needs SM89+ (H100), AWQ/GPTQ need specific kernel support, not all formats work on all GPUs | Before recommending a quantization format, verify the target GPU supports it. FP8 → H100+, not A100. State the hardware requirement explicitly and lead with a compatible option. |
 | **Presenting general knowledge as KB-grounded analysis** | KB call was skipped or failed, response says "I have deep knowledge" and proceeds without citations | You MUST attempt the KB call — don't assume it will fail. If it does fail, use the **KB-Unavailable response format** from Phase 1 exactly. Every claim gets `[no KB]`, every confidence is "Low", every section header gets ⚠️. **BANNED phrases** without `[PageID]`: "I have deep knowledge of X", "from my understanding of X internals", "X typically causes Y". These are confidence-laundering — they make guesses sound authoritative. |
 | **Writing a normal-format response when KB is down** | KB call failed but the response uses the standard Diagnosis/Fix format without `[no KB]` tags or ⚠️ markers — looks authoritative but has zero grounding | If you have zero `[PageID]` citations, you MUST be in KB-Unavailable format. Self-check before sending: search your response for `[no KB]` — if count is 0 and `[PageID]` count is also 0, rewrite in KB-Unavailable format. |
+| **Skipping prevention or writing generic prevention** | Prevention section says "monitor loss" or "use checkpoints" — advice so generic it adds zero value | Prevention must cite a specific tool, metric threshold, or config flag that would have caught this failure earlier. E.g., "add `--log-expert-utilization` every 50 steps; if any expert drops below 5%, trigger alert" — not "monitor expert utilization". |
+| **Verification script that doesn't match the failure mode** | Serving fix verified with single curl; OOM fix verified with "run and see if it crashes" | Match verification to the failure: serving → concurrent load test with latency percentiles; OOM → memory profiling with `torch.cuda.max_memory_allocated()`; convergence → loss curve over N steps with expected trajectory. |
+| **Fix steps without concrete values** | "Try a lower learning rate" or "reduce batch size" without saying to what | Every fix step needs an exact value with reasoning: "Set lr=1e-5 (was 3e-4, ~30× reduction to let aux loss compete with LM loss gradient)". Ranges are acceptable only with a recommended starting point. |
 
 ## Examples
 

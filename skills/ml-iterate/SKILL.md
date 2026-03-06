@@ -43,6 +43,8 @@ Attempt any KB tool call (e.g., `search_knowledge`). If it fails or the API key 
 
 **Gate**: You know what's been tried and can explain why each proposed experiment is different from previous attempts.
 
+**Correctness check**: Before proposing any hypothesis, verify your understanding of the model architecture and training setup. If the user mentions a specific model (e.g., Llama-3, Mistral), call `search_knowledge("[model name] fine-tuning requirements and known issues")` to catch version-specific gotchas (chat templates, tokenizer changes, context length defaults).
+
 **Hard rule**: If API tools are unavailable, your **very first line** must be: `⚠️ No KB access — all technical claims below are tagged [unverified — no KB access].` Then append `[unverified — no KB access]` to EVERY sentence containing a number, LR, model name, rank, token, or recommendation — no exceptions, even if you're confident. A response that says "API isn't configured" but then makes untagged claims scores 1/3 on grounding. The tags ARE the deliverable when the KB is down.
 
 ### Phase 2: Rank Options
@@ -54,9 +56,13 @@ For the top 2-3 hypotheses from Phase 1:
 
 **Gate**: Each option has KB-grounded implementation details with at least one `[PageID]` citation. If you couldn't reach the KB, every technical claim must be marked `[unverified — no KB access]`.
 
+**Minimum**: At least 2 parallel `search_knowledge` calls per phase. Each option in Phase 3 must cite at least 2 distinct KB sources (or 2 `[unverified]` tags). If you have fewer, you haven't searched enough — add queries.
+
 ### Phase 3: Design Next Experiment
 
 Present ranked alternatives:
+
+**Specificity rule**: Every recommendation must reference the user's actual model name, dataset size, current metric values, and hardware. Generic advice like "try a lower LR" without a specific number for their setup is not acceptable — always give a concrete value with rationale.
 
 **Before emitting — STOP AND COUNT**: Scan every sentence in your draft. Count `[PageID: xxx]` and `[unverified — no KB access]` tags. If the total is zero, **do not emit** — your response will score 1/3 on grounding regardless of accuracy. Go back and tag every sentence that contains a number, LR, model name, rank, token count, or technical recommendation. The #1 failure mode is: model says "API isn't configured", writes expert-quality advice, tags nothing. That scores the same as hallucination.
 
@@ -71,14 +77,19 @@ Present ranked alternatives:
 - **What**: [specific change — one variable] [unverified — no KB access]
 - **Why**: e.g. "LoRA LRs above 5e-5 often cause forgetting in 8B+ models [PageID: 4521] — your 1e-4 is 2-5× too high [unverified — no KB access]"
 - **How**: [implementation steps with config/code] [unverified — no KB access]
-- **Code**: [complete, runnable script or config — not pseudocode. Include imports, file paths, and a verification step that confirms the change took effect]
+- **Code**: [complete, runnable script — not pseudocode. Must include: all imports, real file paths from user's setup, a `print()` or assertion that confirms the change took effect. If config change, show the full config block with changed values highlighted via comments]
+- **Watch out**: [1-2 specific pitfalls for THIS change on THIS model/dataset — pull from Anti-Patterns table or KB. Not generic advice.]
 - **Effort**: quick fix / half day / multi-day
 - **Risk**: [what could go wrong]
 
 ### Option 2: ...
 
 ### Recommended Next Experiment
-[Which option to try first and why, citing KB evidence or marking `[unverified]`. Include: what metric to watch, how many steps before deciding, what "success" looks like.]
+[Which option to try first and why, citing KB evidence or marking `[unverified]`. Must include:
+- **Metric**: exact metric name and current value → target value
+- **Checkpoint**: how many steps/epochs before evaluating (cite KB for task-specific guidance)
+- **Success gate**: specific threshold — "if BLEU > X after Y steps, proceed; otherwise revert"
+- **Failure plan**: what to try if this doesn't work]
 ```
 
 ## After This
@@ -100,6 +111,8 @@ Present ranked alternatives:
 | Not defining success criteria upfront | "I'll know improvement when I see it" | Write the target metric before running. Otherwise you'll rationalize mediocre results. |
 | Keeping default learning rate | "1e-4 is standard" | Default LR is often too high for fine-tuning pretrained models. Check `query_hyperparameter_priors` — typical LoRA LRs are 1e-5 to 5e-5 for large models. |
 | Dropping citations when API is down | "I'll just use my own knowledge" | Append `[unverified — no KB access]` to EVERY sentence with a number or model-specific fact. Count your tags before emitting — zero tags = broken response. This is the #1 failure mode. |
+| Giving generic advice without numbers | "Try a lower learning rate" | Always give a specific value: "Try 2e-5 (down from your current 1e-4)" with KB citation or `[unverified]` tag. Generic advice is not actionable. |
+| Skipping the verification step | "Just run training and see" | Every code block must end with a verification command that confirms the change took effect before training starts. |
 
 ## Examples
 
