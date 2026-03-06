@@ -13,13 +13,14 @@ Turn goals into validated, runnable implementation plans grounded in framework d
 
 **KB mode:** Call `build_plan` → `review_plan` → `search_knowledge` for gaps. Cite as `[PageID]`.
 
-**Web mode:** Decompose goal into steps manually → WebFetch official framework docs per step to verify APIs, configs, and params → self-review against docs. Cite as `[source](URL)`. Start response with: `> Grounding: Web mode — citations from official docs.`
+**Web mode:** Decompose goal into steps manually → WebFetch official framework docs per step to verify APIs, configs, and params → self-review against docs. Cite as `[source](URL)`. **Minimum: 1 WebFetch per plan step** — if a step has no fetched citation, fetch before presenting. Start response with: `> Grounding: Web mode — citations from official docs.`
 
 **Web mode URL registry:**
 - HF Transformers/PEFT/TRL: `https://huggingface.co/docs/{transformers,peft,trl}`
 - Axolotl: `https://github.com/axolotl-ai-cloud/axolotl`
 - DeepSpeed: `https://www.deepspeed.ai/docs`
 - vLLM: `https://docs.vllm.ai`
+- Model cards: `https://huggingface.co/{org}/{model}` — ALWAYS fetch for architecture-specific layer names, config keys, and training recipes
 - LangChain/LangGraph: `https://python.langchain.com/docs`, `https://langchain-ai.github.io/langgraph`
 
 ## The Iron Law
@@ -72,10 +73,13 @@ In both modes, verify for each gap:
    - **Current API version** — verify exact function signatures for the pinned version
    - Memory/compute estimation for the specific hardware
    - **Compatibility caveats** — features that are version-dependent or have known workarounds
+   - **Model architecture verification** — for multimodal or composite models, fetch the model card AND inspect layer names; do not assume standard naming
 
 **Gate**: Every step in the plan has either documentation confirmation or an explicit "verify during dry-run" flag.
 
 > **Code correctness gate**: Before presenting any code block, mentally trace it with a concrete input. Check: (1) variable names match across lines, (2) return types match what the caller expects, (3) set/list operations use the right identity check (`==` not `id()`), (4) no duplicate class/function definitions across steps, (5) callback/metric functions return the type the framework expects (e.g., DSPy metrics must return `bool` when `trace is not None` for bootstrapping; structured output params must match the SDK — `output_schema` ≠ `output_format`). If you spot an inconsistency, fix it before presenting.
+
+> **Kwarg verification gate**: For every class instantiation (e.g., `Trainer(...)`, `Pipeline(...)`, `Model.from_pretrained(...)`), verify **every keyword argument name** against the class signature in the docs — not from memory. Common traps: `data_collator` not `data_collate_fn`, `compute_metrics` not `metric_fn`, `torch_dtype` not `dtype`. One wrong kwarg silently ignored = hours wasted.
 
 > **Correctness gate**: For any step that involves an SDK or library API, you MUST verify the import path, function signature, and **exact parameter names**. KB mode: call `search_knowledge("[library] [function] API signature [version]")`. Web mode: WebFetch the API docs page. Do NOT guess APIs from memory.
 
@@ -118,6 +122,8 @@ N. **Export & Deploy** — [merge adapters / export model / package artifacts]
    - Validate: [load exported model, run inference on test input]
    - Artifacts: [what files are produced, where they go]
 
+**Post-assembly citation audit**: Before presenting, count citations. KB mode: minimum 1 `[PageID]` per step. Web mode: minimum 1 `[source](URL)` per step. Any step below the floor → fetch/search before presenting. Mark truly uncitable steps `[UNVERIFIED — test in dry-run]`.
+
 **Launcher note**: Provide launch commands for **both** Slurm (`sbatch`/`srun`) and bare-metal (`torchrun`/`accelerate launch`) when the plan involves multi-node or multi-GPU execution.
 
 ### Risks & Mitigations
@@ -148,7 +154,7 @@ Execute in phases: **dry-run on 1% data → 1 epoch → full run.**
 | No dry-run phase | "The config looks right" | Always plan a 10-step dry-run before committing GPU hours |
 | Skipping review_plan | "build_plan gave a good result" | review_plan catches risks that build_plan misses. Always run both. |
 | Custom data pipeline when native exists | "I'll write my own Dataset class" | Use the framework's native data loading first (e.g., LLaVA's pipeline, Axolotl's YAML datasets). Custom only when native can't handle your format. Call `search_knowledge("[framework] native data pipeline")` to confirm the native path before writing custom code. |
-| Using outdated or misremembered APIs | "The tutorial code works" / "I've seen this param before" | `search_knowledge` for the **pinned version's** API. Verify exact parameter names, not just function names — e.g., `output_schema` ≠ `output_format`. If two initialization paths exist (e.g., `Trainer` vs manual loop), pick ONE and remove the other. |
+| Using outdated or misremembered APIs | "The tutorial code works" / "I've seen this param before" | `search_knowledge` for the **pinned version's** API. Verify exact parameter names, not just function names — e.g., `output_schema` ≠ `output_format`, `data_collator` ≠ `data_collate_fn`. For every `Class(...)` call, verify kwargs against the actual `__init__` signature — Python silently swallows unexpected `**kwargs`. If two initialization paths exist (e.g., `Trainer` vs manual loop), pick ONE and remove the other. |
 | No error handling in execution steps | "We'll deal with errors when they happen" | Every step that calls an API or runs training needs try/except with a recovery action (retry, checkpoint resume, graceful exit). |
 | Single-launcher execution scripts | "Everyone uses Slurm" | Provide launcher commands for both Slurm (`srun`/`sbatch`) and bare-metal (`torchrun`) setups. Not all clusters use the same scheduler. |
 | String parsing for routing decisions | "I'll use StrOutputParser for yes/no" | Use structured output (Pydantic models, tool calls, or JSON mode) for any LLM decision that controls flow — routing, grading, gating. String parsing breaks on minor output variations. |
@@ -158,6 +164,8 @@ Execute in phases: **dry-run on 1% data → 1 epoch → full run.**
 | Presenting code sketches as plans | "The user can fill in the rest" | Every code block in the plan must be complete and runnable. If you can't write the full code, call `search_knowledge` until you can. Incomplete snippets waste more time than thorough planning. |
 
 | Importing from private/internal paths | "It works in my version" | Never import from `_private` or undocumented submodules (e.g., `ragas._faithfulness`). Use only the public API surface. If the public API is missing a feature, note it as a limitation rather than reaching into internals that break across minor versions. |
+| Guessing model layer names for LoRA/PEFT | "The standard names should work" | Always verify `target_modules` by fetching the model card or running `model.named_modules()`. Multimodal models have non-obvious layer names (e.g., projector linears named `linear_1` not `proj`). Include a verification snippet: `print([n for n, _ in model.named_modules() if isinstance(_, nn.Linear)])` in the plan. |
+| Rolling custom label masking for multimodal models | "I'll mask image tokens manually" | Use the framework's native `DataCollator` or label masking (e.g., HF `DataCollatorForLanguageModeling`, LLaVA's built-in masking). Custom masking heuristics (counting image tokens, hardcoded offsets) are fragile across model versions. Search docs for the model's native training pipeline before writing custom masking. |
 | Plan steps without citations | "The KB didn't have this topic" | If `build_plan` didn't cite a step, call `search_knowledge` for it. If the KB truly has no info, mark the step `[UNVERIFIED — test in dry-run]` so the user knows the risk. |
 
 ## Examples

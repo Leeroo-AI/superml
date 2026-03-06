@@ -13,12 +13,14 @@ Catch mistakes before they waste GPU hours. Verify configs, code, and math again
 
 **KB mode:** Call `verify_code_math` / `query_hyperparameter_priors` / `review_plan`. Cite as `[PageID]`.
 
-**Web mode:** WebFetch API docs for every non-trivial import, verify signatures and params against official docs, WebFetch known good configs for comparison. Cite as `[source](URL)`. Start response with: `> Grounding: Web mode — citations from official docs.`
+**Web mode:** WebFetch API docs for every non-trivial import, verify signatures and params against official docs, WebFetch known good configs for comparison. Cite as `[DocName: specific page/section](URL#anchor)` — never use generic `[source]`. The link text MUST name the document and section (e.g., `[HF PEFT: LoRA Conceptual Guide](https://huggingface.co/docs/peft/main/en/conceptual_guides/lora)`). Start response with: `> Grounding: Web mode — citations from official docs.`
 
 **Web mode URL registry:**
-- HF PEFT: `https://huggingface.co/docs/peft`
-- HF Transformers: `https://huggingface.co/docs/transformers`
-- HF TRL: `https://huggingface.co/docs/trl`
+- HF PEFT LoRA guide: `https://huggingface.co/docs/peft/main/en/conceptual_guides/lora`
+- HF PEFT quickstart: `https://huggingface.co/docs/peft/main/en/quicktour`
+- HF Transformers TrainingArguments: `https://huggingface.co/docs/transformers/main/en/main_classes/trainer#transformers.TrainingArguments`
+- HF TRL SFTTrainer: `https://huggingface.co/docs/trl/main/en/sft_trainer`
+- HF TRL SFTConfig: `https://huggingface.co/docs/trl/main/en/sft_trainer#trl.SFTConfig`
 - DeepSpeed: `https://www.deepspeed.ai/docs/config-json`
 - vLLM: `https://docs.vllm.ai`
 - PyTorch: `https://pytorch.org/docs/stable`
@@ -51,7 +53,7 @@ WebFetch the relevant documentation for each check:
 - **For configs/hyperparameters:** WebFetch the framework's config reference page and known-good example configs (e.g., Axolotl examples, HF training examples). Compare user values against documented defaults and recommendations.
 - **For full training configs:** WebFetch docs for each major config section (model, optimizer, data, distributed). Cross-check all values.
 
-Cite as `[source](URL)`. Start response with: `> Grounding: Web mode — citations from official docs.`
+Cite as `[DocName: section](URL#anchor)` — never generic `[source]`. Start response with: `> Grounding: Web mode — citations from official docs.`
 
 **If BOTH KB and web are unavailable:**
 1. First line: `⚠️ WARNING: This verification is ungrounded. All recommendations below are best-effort. Verify independently.`
@@ -85,7 +87,9 @@ Present the result:
 3. Scan your draft for "but I can", "manual review", "thorough review", any form of "but" followed by an offer to review — delete the entire sentence
 3b. Scan your draft for rows ending with only `**UNGROUNDED**` and no `[public-ref:...]` — add a specific public reference (doc URL, arXiv ID, or framework doc section) to each
 4. Scan for any row that ends with just an explanation (no PageID, no `**UNGROUNDED**`) — append `**UNGROUNDED**`
-Do NOT proceed to the template below until all four checks pass.
+5. Scan for any `[source]` or `[Source]` link text — replace with `[DocName: specific section](URL)` format (e.g., `[HF PEFT: LoRA Conceptual Guide](URL)`). Generic `[source]` is an instant grounding fail.
+6. In web mode, every URL citation MUST use the named format: `[DocName: section](URL)`. Rewrite any that don't match.
+Do NOT proceed to the template below until all six checks pass.
 
 ```
 ## Verification: [what was checked]
@@ -95,9 +99,9 @@ Do NOT proceed to the template below until all four checks pass.
 ### Findings
 | Check | Status | Detail | Fix |
 |-------|--------|--------|
-| [item] | PASS/FAIL/WARN | [explanation with exact math + exact numbers, never just ranges] — [PageID:title] ([public-ref:URL]) or **UNGROUNDED** [public-ref:URL] | [copy-paste fix: exact config line or command; PASS rows say '—'] | ← EVERY row needs ALL 4 columns + citation |
+| [item] | PASS/FAIL/WARN | [explanation with exact math + exact numbers, never just ranges] — [PageID:title] ([public-ref:URL]) or **UNGROUNDED** [public-ref:URL] | [copy-paste fix; PASS rows say '—'] | ← EVERY row needs ALL 4 columns + named citation (NEVER `[source]`) |
 
-EVERY row in this table MUST end with either a `[PageID:title]` citation or the literal text `**UNGROUNDED**`. No exceptions. No row may have just an explanation.
+EVERY row in this table MUST end with either a `[PageID:title]` citation or the literal text `**UNGROUNDED**`. No exceptions. No row may have just an explanation. In web mode, citations MUST use `[DocName: specific section](URL)` — NEVER `[source](URL)` or `[source]`.
 
 **Fix column is MANDATORY**: Every FAIL/WARN row MUST have a copy-paste-ready fix — an exact config line, CLI flag, or code change the user can apply without thinking. `Fix: —` is only allowed for PASS rows. If your table is missing the Fix column, you have failed the skill.
 
@@ -149,6 +153,7 @@ The corrected version MUST be complete and copy-paste ready. Do not use `...` or
 | Skipping KB calls | "I'll just review manually" feels faster | Always call the KB first. Ungrounded advice sounds confident but may be wrong. Mark every uncited claim UNGROUNDED. |
 | Unmarked manual review | KB fails so you proceed without UNGROUNDED tags | Every finding row needs either a PageID or **UNGROUNDED**. Confident tone without citations is the most dangerous output. |
 | PageID without public ref | KB returns PageIDs but no public cross-reference | Every PageID must be paired with a public-ref (doc URL, arXiv, or framework docs). Internal-only citations can't be verified by the user. |
+| Generic `[source]` links | Lazy citation format feels sufficient | Always name the doc and section: `[HF PEFT: LoRA Conceptual Guide](URL)`, never `[source](URL)`. Generic labels tank grounding scores. |
 | Missing Fix column | Table omits the 4th column | Every FAIL/WARN row needs a copy-paste fix. Rebuild the table if the Fix column is missing. |
 | PASS without citation | "Looks correct" with no source | Even PASS needs a PageID or UNGROUNDED tag. The user can't verify "correct" without a source. |
 | Range instead of value | "Use 1e-4 to 3e-4" | Pick one value and cite why. Ranges defer the decision to the user — that's our job. |
@@ -176,7 +181,7 @@ CORRECT first line of output (non-negotiable):
 ```
 CORRECT table row:
 ```
-| LoRA alpha/r ratio | FAIL | alpha=16 / r=128 = 0.125x scaling — too low | **UNGROUNDED** [public-ref: QLoRA paper — arXiv:2305.14314 §4] [public-ref: HuggingFace PEFT docs — peft.readthedocs.io/en/latest/conceptual_guides/lora] |
+| LoRA alpha/r ratio | FAIL | alpha=16 / r=128 = 0.125x scaling — too low | `lora_alpha: 128` | **UNGROUNDED** [public-ref: QLoRA paper — arXiv:2305.14314 §4] [public-ref: [HF PEFT: LoRA Conceptual Guide](https://huggingface.co/docs/peft/main/en/conceptual_guides/lora)] |
 ```
 WRONG (instant fail — grounding score = 0): `"The Leeroopedia KB isn't available (API key not configured), but I can do a thorough manual review."`
 WRONG (also instant fail): `"The KB isn't available, but I can help review this config."`
