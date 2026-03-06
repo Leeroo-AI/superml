@@ -1,21 +1,30 @@
-# Leeroopedia Plugin
+# Leeroopedia
 
-An AI coding agent plugin that gives Claude Code (and Cursor, Codex, OpenCode, Gemini CLI) access to **Leeroopedia** — an ML/AI knowledge base with **27,667 pages** from **1000+ repos**.
+An ML engineering plugin for AI coding agents.
 
-Instead of guessing about framework internals, config formats, and best practices, your agent searches a curated knowledge base and gives you grounded, cited answers.
+It adds two things your agent doesn't have out of the box:
 
-## Why
+**Process** — seven skills that cover how ML work actually gets done. Plan the run, verify the config, debug the failure, iterate on results, track experiments across sessions. Basically the same steps you'd follow yourself, just encoded so your agent follows them too.
 
-LLMs hallucinate ML/AI details. Framework APIs change, config formats vary, and "standard" hyperparameters depend on model size, hardware, and task. Leeroopedia fixes this by grounding agent responses in documented best practices from real framework repos.
+**Memory** — powered by [Leeroopedia](https://leeroopedia.com), 27k+ pages of best practices and hard-won lessons from 1000+ ML/AI frameworks. When your agent recommends a config or a fix, it can point to where it learned it.
+
+Works with Claude Code, Cursor, Codex, OpenCode, and Gemini CLI.
+
+## How It Works
+
+1. **A session hook** kicks in automatically — no manual setup per conversation.
+2. **Skills** walk your agent through ML workflows — before launching a training run, it checks the config; when something breaks, it debugs by root cause; after results, it logs what worked.
+3. **MCP tools** connect to the Leeroopedia knowledge base — your agent looks things up and cites real framework docs.
+4. **A persistent ML agent** (`ml-expert`) picks up heavier tasks and keeps track of your hardware, experiments, and lessons learned across sessions.
 
 ## Prerequisites
 
 ### 1. Get an API Key
 
-Sign up at [app.leeroopedia.com](https://app.leeroopedia.com) → Dashboard → API Keys → Copy key.
+Head to [app.leeroopedia.com](https://app.leeroopedia.com/dashboard), grab an API key from the dashboard.
 
-- Format: `kpsk_...`
-- **$20 free credit** on signup, no credit card required
+- Keys look like `kpsk_...`
+- **$20 free credit** on signup, no credit card needed
 
 ### 2. Set the Environment Variable
 
@@ -23,9 +32,9 @@ Sign up at [app.leeroopedia.com](https://app.leeroopedia.com) → Dashboard → 
 export LEEROOPEDIA_API_KEY=kpsk_your_key_here
 ```
 
-Add to your shell profile (`~/.bashrc`, `~/.zshrc`, `~/.config/fish/config.fish`) for persistence.
+Add it to your shell profile (`~/.bashrc`, `~/.zshrc`, `~/.config/fish/config.fish`) so it sticks.
 
-### 3. Install `uv` (if you don't have it)
+### 3. Install uv (if you don't have it)
 
 ```bash
 curl -LsSf https://astral.sh/uv/install.sh | sh
@@ -68,43 +77,65 @@ git clone https://github.com/leeroo-ai/leeroopedia-plugin.git
 gemini extension add ./leeroopedia-plugin/gemini-extension.json
 ```
 
-### Alternative: Remote MCP (no Python/uv required)
+### Alternative: Remote MCP (no local install)
+
+If you just want the knowledge base without the full plugin:
 
 ```bash
 claude mcp add --transport http leeroopedia "https://mcp.leeroopedia.com/mcp?token=YOUR_KEY"
 ```
 
-## Skills
+You get the MCP tools (memory) but not the workflow skills (process).
+
+### Verify Installation
+
+Start a conversation and try something like:
+
+```
+Verify my LoRA config: r=64, alpha=16, lr=5e-3, target_modules=q_proj,v_proj
+```
+
+If it's working, your agent will call Leeroopedia tools and cite sources with `[PageID]` tags in its response.
+
+## What's Inside
+
+### Skills
 
 <!-- BEGIN_SKILLS_TABLE -->
-| Skill | Description |
+| Skill | What it does |
 |-------|-------------|
-| [ml-debug](skills/ml-debug/SKILL.md) | Use when something is failing in ML/AI work — OOM, NaN, divergence, crashes, bad throughput, wrong outputs, dependency conflicts |
-| [ml-experiment](skills/ml-experiment/SKILL.md) | Use when starting, logging, or reviewing ML experiments — maintains a persistent experiment journal with hypotheses, results, and learnings across sessions |
-| [ml-iterate](skills/ml-iterate/SKILL.md) | Use when the user is stuck, needs ranked next steps, or wants alternatives after initial experiments — "I tried X and got Y, what next?" |
-| [ml-plan](skills/ml-plan/SKILL.md) | Use when the user wants an implementation plan, architecture design, or multi-step ML pipeline — "build X", "implement X", "design X", "set up X" |
-| [ml-research](skills/ml-research/SKILL.md) | Use when the user wants to understand an ML/AI topic, compare approaches, or survey framework capabilities — "how does X work?", "compare X vs Y" |
-| [ml-verify](skills/ml-verify/SKILL.md) | Use when the user wants to verify code, config, or math before running — or proactively before any expensive training job or deployment |
-| [using-leeroopedia](skills/using-leeroopedia/SKILL.md) | Use when starting any conversation involving ML/AI — establishes how to use Leeroopedia KB tools and workflow skills |
+| [ml-plan](skills/ml-plan/SKILL.md) | Plan training runs, architectures, and multi-step pipelines |
+| [ml-verify](skills/ml-verify/SKILL.md) | Check configs, code, and math before you burn GPU hours |
+| [ml-debug](skills/ml-debug/SKILL.md) | Debug OOM, NaN, divergence, crashes, bad throughput |
+| [ml-iterate](skills/ml-iterate/SKILL.md) | Ranked next steps when results aren't where you want them |
+| [ml-experiment](skills/ml-experiment/SKILL.md) | Track experiments — hypotheses, results, and learnings across sessions |
+| [ml-research](skills/ml-research/SKILL.md) | Deep-dive into ML topics, compare approaches, survey frameworks |
+| [using-leeroopedia](skills/using-leeroopedia/SKILL.md) | Loaded at session start — wires up skills to KB tools and sets quality standards |
 <!-- END_SKILLS_TABLE -->
 
 ### Agent
 
-**ml-expert** — A senior ML/AI engineer agent for heavy-lift tasks: pipeline reviews, deep analysis, framework deep-dives. Maintains persistent memory of your hardware setup, experiments, and lessons learned across sessions.
+**ml-expert** — a persistent ML engineer agent for the bigger stuff: pipeline reviews, deep analysis, framework deep-dives. It remembers your hardware setup, past experiments, and lessons learned across sessions.
 
-## How It Works
+### MCP Tools
 
-1. **SessionStart hook** injects the bootstrap skill into every conversation
-2. **Bootstrap skill** (`using-leeroopedia`) teaches the agent when and how to use the KB
-3. **Workflow skills** (`ml-plan`, `ml-debug`, etc.) guide specific task types with structured tool sequences
-4. **8 MCP tools** (`search_knowledge`, `build_plan`, `review_plan`, `verify_code_math`, `diagnose_failure`, `propose_hypothesis`, `query_hyperparameter_priors`, `get_page`) connect to the Leeroopedia knowledge base
-5. **ml-expert agent** handles complex multi-step tasks with persistent memory
+Eight tools that talk to the Leeroopedia knowledge base:
+
+| Tool | What it does |
+|------|-------------|
+| `search_knowledge` | Look up best practices, configs, framework details |
+| `build_plan` | Get a KB-grounded implementation plan |
+| `review_plan` | Spot risks and gaps in an existing plan |
+| `verify_code_math` | Check code or config against documented behavior |
+| `diagnose_failure` | Match errors against known framework failure patterns |
+| `propose_hypothesis` | Ranked alternatives when you're stuck |
+| `query_hyperparameter_priors` | Recommended parameter ranges for your specific setup |
+| `get_page` | Pull up the full page behind a `[PageID]` citation |
 
 ## Links
 
-- [Leeroopedia](https://leeroopedia.com) — ML/AI knowledge base
-- [leeroopedia-mcp](https://github.com/leeroo-ai/leeroopedia-mcp) — MCP server
-- [Benchmarks](https://leeroopedia.com/benchmarks) — Knowledge base coverage and accuracy
+- [Leeroopedia](https://leeroopedia.com) — the ML/AI knowledge base behind the memory
+- [leeroopedia-mcp](https://github.com/leeroo-ai/leeroopedia-mcp) — MCP server repo
 
 ## License
 
