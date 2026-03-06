@@ -7,6 +7,23 @@ description: Use when the user wants to understand an ML/AI topic, compare appro
 
 Deep-dive into ML topics using verified framework documentation, not stale training data.
 
+## Grounding
+
+**Detect mode:** On your first grounding call, check if Leeroopedia KB tools are available. If they return results, use **KB mode**. If unavailable or auth fails, use **Web mode**.
+
+**KB mode:** Call `search_knowledge` (2-4 parallel queries) → `get_page` on top results → synthesize. Cite as `[PageID]`.
+
+**Web mode:** WebFetch official docs (2-3 pages) → WebFetch GitHub README/examples → synthesize. Cite as `[source](URL)`. Start response with: `> Grounding: Web mode — citations from official docs.`
+
+**Web mode URL registry:**
+- HF Transformers/PEFT/TRL: `https://huggingface.co/docs/{transformers,peft,trl}`
+- vLLM: `https://docs.vllm.ai`
+- DeepSpeed: `https://www.deepspeed.ai/docs`
+- LangChain: `https://python.langchain.com/docs`
+- LangGraph: `https://langchain-ai.github.io/langgraph`
+- RAGAS: `https://docs.ragas.io`
+- PyTorch: `https://pytorch.org/docs/stable`
+
 ## The Iron Law
 
 ```
@@ -19,26 +36,35 @@ Your training data is months old. The KB has current framework docs. When the tw
 
 ### Phase 1: Multi-Angle Search
 
-Launch 2-4 `search_knowledge` calls in **parallel** with different angles:
+**KB mode:** Launch 2-4 `search_knowledge` calls in **parallel** with different angles:
 - Core concept / mechanism
 - Framework-specific implementation
 - Configuration and usage patterns
 - Performance characteristics or tradeoffs
 
-**Gate**: You have KB results covering at least 2 distinct angles on the topic before synthesizing.
+**Web mode:** WebFetch 2-4 official documentation pages covering different angles:
+- The framework's main docs page for the feature
+- GitHub README or examples directory
+- Any dedicated guide or tutorial page
+- Comparison or migration guide (if applicable)
 
-> **Citation density target**: Aim for 15+ unique `[PageID]` citations in the final answer. If your search results yield fewer than 8 distinct pages, add another search angle. Call `get_page` on at least 3 top results — summaries from `search_knowledge` are not enough to ground specific claims.
+**Gate**: You have sources covering at least 2 distinct angles on the topic before synthesizing.
+
+> **Citation density target**: Aim for 10+ unique citations in the final answer. KB mode: `[PageID]` citations, call `get_page` on at least 3 top results. Web mode: `[source](URL)` citations from distinct doc pages.
 
 ### Phase 2: Expand and Resolve
 
-1. Call `get_page` on the most relevant `[PageID]` citations — prioritize pages with:
-   - Code examples or config references
-   - Edge cases or gotchas
-   - Quantitative comparisons
+**KB mode:**
+1. Call `get_page` on the most relevant `[PageID]` citations — prioritize pages with code examples, edge cases, or quantitative comparisons
 2. If sources disagree, note which is newer or more framework-specific
 3. If there's a gap, run one more targeted `search_knowledge`
 
-**Gate**: Every factual claim, config value, and table cell has a `[PageID]` citation. CLI flags, parameter names, and config keys must appear verbatim in a KB source — do not invent flags or options from memory. Every version number and compatibility statement must cite the specific KB page that confirms it.
+**Web mode:**
+1. For the most relevant pages, WebFetch specific sub-pages (API reference, config reference, changelog)
+2. If sources disagree, check the changelog or release notes for the latest info
+3. If there's a gap, WebFetch GitHub issues or discussions for the topic
+
+**Gate**: Every factual claim, config value, and table cell has a citation. CLI flags, parameter names, and config keys must appear verbatim in a documentation source — do not invent flags or options from memory.
 
 > **Identifier verification**: Before including any model name (e.g., `BAAI/bge-code-v1`), API method signature, or config field name, confirm the **exact string** appears in a KB page. If you cannot find verbatim confirmation, call `search_knowledge` with the identifier. If still unconfirmed, flag it as "unverified — check Hub/docs" rather than presenting it as fact.
 

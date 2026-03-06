@@ -7,6 +7,22 @@ description: Use when the user wants to verify code, config, or math before runn
 
 Catch mistakes before they waste GPU hours. Verify configs, code, and math against documented framework behavior.
 
+## Grounding
+
+**Detect mode:** On your first grounding call, check if Leeroopedia KB tools are available. If they return results, use **KB mode**. If unavailable or auth fails, use **Web mode**.
+
+**KB mode:** Call `verify_code_math` / `query_hyperparameter_priors` / `review_plan`. Cite as `[PageID]`.
+
+**Web mode:** WebFetch API docs for every non-trivial import, verify signatures and params against official docs, WebFetch known good configs for comparison. Cite as `[source](URL)`. Start response with: `> Grounding: Web mode — citations from official docs.`
+
+**Web mode URL registry:**
+- HF PEFT: `https://huggingface.co/docs/peft`
+- HF Transformers: `https://huggingface.co/docs/transformers`
+- HF TRL: `https://huggingface.co/docs/trl`
+- DeepSpeed: `https://www.deepspeed.ai/docs/config-json`
+- vLLM: `https://docs.vllm.ai`
+- PyTorch: `https://pytorch.org/docs/stable`
+
 ## The Iron Law
 
 ```
@@ -17,48 +33,34 @@ An hour of verification saves days of debugging failed runs. Check the config ag
 
 ## Phases
 
-> **ZERO-CITATION GATE** — If KB calls fail: (1) first token = `⚠️`, (2) every table row ends `**UNGROUNDED**`, (3) never say "but I can review". No exceptions. See Phase 1 for full rules.
+### Phase 1: Check Against Documentation
 
-### Phase 1: Check Against KB
+**KB mode:**
 
-> **CRITICAL FAILURE PATH**: If ANY KB call returns "API key not configured" or empty results:
-> 1. Your FIRST output token MUST be `⚠️` — not a verdict, not "The KB isn't available but...", not ANY other text
-> 2. Follow the 4-rule KB-failure checklist below exactly
-> 3. These exact phrases are BANNED after KB failure — delete the sentence if you catch yourself writing any of them: "but I can do a", "but let me review", "I can do a thorough", "let me review manually", "isn't available but", "not configured, but", "thorough manual review", "but I can help"
-> 4. **Self-test**: Re-read your first sentence. Does it start with `⚠️ WARNING: This verification is entirely ungrounded`? If not, delete everything and restart.
+Call the appropriate KB tools:
+- **For code/math:** `verify_code_math(code_snippet, concept_name)`
+- **For configs/hyperparameters:** `query_hyperparameter_priors(query)` with model size, task type, hardware, and framework context
+- **For full training configs:** `review_plan(proposal, goal)` with the complete config
 
-**For code/math:** Call `verify_code_math(code_snippet, concept_name)` with:
-- The code, formula, or config to check
-- What it's implementing (e.g., "LoRA scaling factor", "gradient accumulation with DDP")
+Run whichever combination fits. When in doubt, run all applicable checks in parallel. Cite as `[PageID]`.
 
-**For configs/hyperparameters:** Call `query_hyperparameter_priors(query)` with:
-- Model size, task type, hardware, and framework context
-- The specific parameters you're checking
+**Web mode:**
 
-**For full training configs:** Call `review_plan(proposal, goal)` with:
-- The complete config as the proposal
-- The training objective as the goal
+WebFetch the relevant documentation for each check:
+- **For code/math:** WebFetch the API docs for the framework. Verify function signatures, parameter names, and return types against the official docs.
+- **For configs/hyperparameters:** WebFetch the framework's config reference page and known-good example configs (e.g., Axolotl examples, HF training examples). Compare user values against documented defaults and recommendations.
+- **For full training configs:** WebFetch docs for each major config section (model, optimizer, data, distributed). Cross-check all values.
 
-Run whichever combination fits. When in doubt, run all applicable checks in parallel.
+Cite as `[source](URL)`. Start response with: `> Grounding: Web mode — citations from official docs.`
 
-**Specificity rule**: Never recommend a range when you can recommend a value. "LR should be 2e-4" not "LR should be 1e-4 to 3e-4". Pick the single best value from KB results and cite why. If KB gives a range, pick the midpoint and say so.
+**If BOTH KB and web are unavailable:**
+1. First line: `⚠️ WARNING: This verification is ungrounded. All recommendations below are best-effort. Verify independently.`
+2. Every row in the findings table ends with `**UNGROUNDED**`
+3. Cite specific public sources where possible: arXiv IDs, doc URLs, framework doc sections
 
-**MANDATORY**: Always attempt KB calls first — even if you suspect they'll fail. Never skip to "manual review." If calls fail, follow the KB-failure checklist below exactly. A response with zero PageID citations that lacks the warning banner and UNGROUNDED tags is a FAILED skill execution.
+**Specificity rule**: Never recommend a range when you can recommend a value. Pick the single best value from your sources and cite why.
 
-**If KB calls fail or return nothing (including "API key not configured") — STOP and do this exactly:**
-1. Your FIRST line of output MUST be: `⚠️ WARNING: This verification is entirely ungrounded — zero KB citations. All recommendations below are best-effort and may be wrong. Verify independently before trusting.`
-2. EVERY row in the findings table MUST end with `**UNGROUNDED**`
-3. You MUST NOT say "manual review", "thorough review", or any phrase implying you can substitute for the KB. If your draft contains ANY form of "but" after acknowledging KB failure, delete that entire sentence. The ONLY acceptable first sentence is the warning banner — nothing else, no preamble, no softening. **Test**: if your opening doesn't start with `⚠️ WARNING:`, you have already failed.
-4. Set citation count to 0
-5. **Fallback references (MANDATORY when KB fails)**: You MUST cite specific public sources for every claim — e.g., `[public-ref: HuggingFace PEFT docs — peft.readthedocs.io/en/latest/]`, `[public-ref: QLoRA paper — arXiv:2305.14314 §4.2]`, `[public-ref: Llama-3 model card — meta-llama/Meta-Llama-3-8B-Instruct]`. Generic phrases like "typically" or "standard practice" without a concrete URL, arXiv ID, or doc section are still ungrounded. Every table row must end with BOTH `**UNGROUNDED**` AND at least one `[public-ref:...]`.
-
-Violating ANY of these four rules is a FAILED skill execution, even if the technical advice is correct.
-
-**Grounding rule**: Every claim in your output MUST cite a specific PageID from KB results.
-
-**Cross-reference rule**: Every PageID citation MUST also include a public verification link — e.g., `[PageID:title] ([public-ref: HuggingFace PEFT docs — peft.readthedocs.io/...])`. Internal KB refs alone score poorly on grounding because readers cannot verify them independently. If a KB call returns no results, say "no KB match found" for that check — do NOT substitute general knowledge without flagging it as ungrounded. Vague references like "the QLoRA paper" or "typically" without a PageID are not grounded.
-
-**Gate**: Every parameter and code path has been checked against KB documentation. If any KB call failed or returned nothing, flag those checks as `UNGROUNDED` in the findings table.
+**Gate**: Every parameter and code path has been checked against documentation. If any check couldn't be verified, flag it in the findings table.
 
 ### Phase 2: Dry Run Checklist
 

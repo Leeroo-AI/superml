@@ -7,6 +7,22 @@ description: Use when something is failing in ML/AI work — OOM, NaN, divergenc
 
 Systematically diagnose ML failures using framework-specific knowledge, not guesswork.
 
+## Grounding
+
+**Detect mode:** On your first grounding call, check if Leeroopedia KB tools are available. If they return results, use **KB mode**. If unavailable or auth fails, use **Web mode**.
+
+**KB mode:** Call `diagnose_failure` → `query_hyperparameter_priors` → `search_knowledge`. Cite as `[PageID]`.
+
+**Web mode:** WebFetch GitHub issues for the error message → WebFetch framework troubleshooting docs → WebFetch config references. Cite as `[source](URL)`. Start response with: `> Grounding: Web mode — citations from official docs and GitHub issues.`
+
+**Web mode URL registry:**
+- PyTorch issues: `https://github.com/pytorch/pytorch/issues`
+- HF Transformers issues: `https://github.com/huggingface/transformers/issues`
+- DeepSpeed issues: `https://github.com/microsoft/DeepSpeed/issues`
+- vLLM issues: `https://github.com/vllm-project/vllm/issues`
+- PEFT docs: `https://huggingface.co/docs/peft`
+- Axolotl issues: `https://github.com/axolotl-ai-cloud/axolotl/issues`
+
 ## The Iron Law
 
 ```
@@ -28,40 +44,42 @@ This is an Iron Law, not a suggestion. A response that looks normal but has zero
 
 ## Phases
 
-**Hard rule: You MUST actually call `diagnose_failure()` or `search_knowledge()` before writing any analysis.** Do not assume KB is unavailable — make the call and let it fail. If it fails, switch to the **KB-Unavailable response format** below — no exceptions, no "but I know this topic well" overrides. Skipping the call and writing authoritative-sounding analysis is the #1 failure mode of this skill.
+**Hard rule: You MUST look things up before writing any analysis.** In KB mode, call `diagnose_failure()` or `search_knowledge()`. In Web mode, WebFetch GitHub issues and framework docs for the error. Do not skip grounding — looking things up first is the #1 differentiator between useful and useless debugging advice.
 
-**STOP — read this before writing anything after a KB failure:** If any KB call returns an error (API key issue, timeout, empty result), you are in **degraded mode**. You MUST use the KB-Unavailable response format for your ENTIRE response. You may NOT write a normal-looking diagnosis that omits citations. The phrase "but I have deep knowledge" is not an escape hatch — it is the exact failure mode this rule prevents. A response without `[PageID]` tags that also lacks `[no KB]` tags on every claim is a broken response, full stop.
+**If KB tools fail:** Switch to Web mode. WebFetch GitHub issues for the exact error message, then WebFetch framework troubleshooting docs. Cite as `[source](URL)`. If both KB and web fail (e.g., no internet), use the **Ungrounded response format** below and mark ALL claims with `[unverified]`.
 
 ### Phase 1: Gather Evidence — Diagnose Immediately
 
-Call `diagnose_failure(symptoms, logs)` with everything available:
+**KB mode:** Call `diagnose_failure(symptoms, logs)` with everything available:
 - **symptoms**: What's failing, what was expected, when it started
 - **logs**: Error lines, stack trace, unexpected output, metrics timeline
 
-Do NOT guess at the cause. The KB has framework-specific failure patterns — use them.
+**Web mode:** Search for the error using WebFetch:
+1. WebFetch GitHub issues for the framework + exact error message (e.g., `https://github.com/huggingface/transformers/issues?q=<error>`)
+2. WebFetch the framework's troubleshooting/FAQ page
+3. If config-related, WebFetch the framework's config documentation
 
-**Gate**: You have a KB-grounded diagnosis with a root cause hypothesis before proposing any fix.
+Do NOT guess at the cause. Look it up first — framework-specific failure patterns are well-documented.
 
-**Non-negotiable**: Every diagnosis MUST include at least one `[PageID]` citation from a KB tool call. If `diagnose_failure` returns no results, call `search_knowledge()` with the framework + error type. If both fail, prefix your entire response with `⚠️ KB Unavailable` and mark ALL confidence as "Low (no KB grounding)". Do NOT present ungrounded expertise as authoritative — no "I have deep knowledge of X internals" framing. Without citations, you are guessing.
+**Gate**: You have a documentation-grounded diagnosis with a root cause hypothesis before proposing any fix. Every diagnosis MUST include at least one citation — `[PageID]` in KB mode, `[source](URL)` in Web mode.
 
-**KB-Unavailable response format** (you MUST use this exact structure if ANY KB call fails or returns errors):
+**Ungrounded response format** (use ONLY if both KB and web search fail):
 ```
-⚠️ KB Unavailable — confidence is Low for all claims below
+⚠️ Ungrounded — no documentation sources available. All claims below are [unverified].
 
-## ⚠️ Diagnosis
-**Root cause**: [one sentence] [no KB]
-**Confidence**: Low (no KB grounding)
-**Version**: [framework version — state if unverified] [no KB]
-**Evidence**: [what in the logs/symptoms points to this] [no KB]
+## Diagnosis
+**Root cause**: [one sentence] [unverified]
+**Confidence**: Low
+**Version**: [framework version] [unverified]
+**Evidence**: [what in the logs/symptoms points to this]
 
-### ⚠️ Fix
-1. [specific action] [no KB]
-2. [verification step] [no KB]
+### Fix
+1. [specific action] [unverified]
+2. [verification step] [unverified]
 
-### ⚠️ If That Doesn't Work
-- [alternative] [no KB]
+### If That Doesn't Work
+- [alternative] [unverified]
 ```
-Every section header must include the ⚠️ marker. Every factual claim must end with `[no KB]`. Every confidence must be "Low". No exceptions — not even "Medium". A response that looks like a normal diagnosis but lacks both `[PageID]` and `[no KB]` tags is the #1 grounding failure. Self-check: before sending, count your `[no KB]` tags. If the count is zero and you have no `[PageID]` citations, your response is broken.
 
 ### Phase 2: Confirm the Diagnosis
 

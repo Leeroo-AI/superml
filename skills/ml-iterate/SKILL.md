@@ -7,6 +7,20 @@ description: Use when the user is stuck, needs ranked next steps, or wants alter
 
 Generate ranked, grounded next steps when you've tried something and need to improve.
 
+## Grounding
+
+**Detect mode:** On your first grounding call, check if Leeroopedia KB tools are available. If they return results, use **KB mode**. If unavailable or auth fails, use **Web mode**.
+
+**KB mode:** Call `propose_hypothesis` → `search_knowledge` → `query_hyperparameter_priors`. Cite as `[PageID]`.
+
+**Web mode:** WebFetch GitHub issues for similar problems → WebFetch framework tuning guides → WebFetch published configs/ablations. Cite as `[source](URL)`. Start response with: `> Grounding: Web mode — citations from official docs.`
+
+**Web mode URL registry:**
+- HF Transformers/PEFT/TRL: `https://huggingface.co/docs/{transformers,peft,trl}`
+- Axolotl: `https://github.com/axolotl-ai-cloud/axolotl`
+- DeepSpeed: `https://www.deepspeed.ai/docs`
+- vLLM: `https://docs.vllm.ai`
+
 ## The Iron Law
 
 ```
@@ -27,36 +41,38 @@ Default every technical claim to `[unverified — no KB access]`. Upgrade to `[P
 
 ### Phase 0: Pre-flight (do this FIRST)
 
-Attempt any KB tool call (e.g., `search_knowledge`). If it fails or the API key is missing:
-1. Your **very first output line** MUST be: `⚠️ No KB access — all technical claims below are tagged [unverified — no KB access].`
-2. Append `[unverified — no KB access]` to **every sentence** containing a number, LR, model name, rank, or recommendation — no exceptions.
-3. Do NOT say "I'll provide analysis from my own knowledge" and then omit tags — that scores 1/3 on grounding.
+Attempt a `search_knowledge` call. If it succeeds, you're in KB mode. If it fails, switch to Web mode — WebFetch official docs instead. If BOTH are unavailable:
+1. Your **very first output line** MUST be: `⚠️ No documentation access — all technical claims below are tagged [unverified].`
+2. Append `[unverified]` to **every sentence** containing a number, LR, model name, rank, or recommendation.
 
-**Gate**: Either you have a working KB connection, or your first line is the ⚠️ banner and you've committed to tagging every technical claim.
+**Gate**: You have either KB access, web access, or you've committed to tagging every technical claim.
 
 ### Phase 1: Review History
 
 1. Read `experiments/journal.md` if it exists — what's been tried, what worked, what didn't
-2. Call `propose_hypothesis(current_status, recent_experiments?)` with:
-   - **current_status**: Where things stand — metrics, what's working, what's not
-   - **recent_experiments**: What's been tried and what happened (prevents re-suggesting dead ends)
+2. **KB mode:** Call `propose_hypothesis(current_status, recent_experiments?)` with current metrics and what's been tried
+   **Web mode:** WebFetch framework docs and GitHub issues for the specific model/task to find documented tuning strategies and known issues
 
 **Gate**: You know what's been tried and can explain why each proposed experiment is different from previous attempts.
 
-**Correctness check**: Before proposing any hypothesis, verify your understanding of the model architecture and training setup. If the user mentions a specific model (e.g., Llama-3, Mistral), call `search_knowledge("[model name] fine-tuning requirements and known issues")` to catch version-specific gotchas (chat templates, tokenizer changes, context length defaults).
-
-**Hard rule**: If API tools are unavailable, your **very first line** must be: `⚠️ No KB access — all technical claims below are tagged [unverified — no KB access].` Then append `[unverified — no KB access]` to EVERY sentence containing a number, LR, model name, rank, token, or recommendation — no exceptions, even if you're confident. A response that says "API isn't configured" but then makes untagged claims scores 1/3 on grounding. The tags ARE the deliverable when the KB is down.
+**Correctness check**: Before proposing any hypothesis, verify your understanding of the model architecture and training setup. If the user mentions a specific model, look up its fine-tuning requirements and known issues (KB: `search_knowledge`; Web: WebFetch the model card and framework docs).
 
 ### Phase 2: Rank Options
 
 For the top 2-3 hypotheses from Phase 1:
+
+**KB mode:**
 1. Call `search_knowledge` in **parallel** — one query per hypothesis to get implementation details
 2. If any hypothesis involves tuning, call `query_hyperparameter_priors` for recommended ranges
+
+**Web mode:**
+1. WebFetch official docs in **parallel** — one doc page per hypothesis for implementation details
+2. If any hypothesis involves tuning, WebFetch known-good configs and published ablation results
 3. For LoRA/fine-tuning iterations: always check whether **rank increase**, **learning rate reduction**, and **model-specific formatting** (chat templates, special tokens) have been explored — these are the most commonly missed levers
 
-**Gate**: Each option has KB-grounded implementation details with at least one `[PageID]` citation. If you couldn't reach the KB, every technical claim must be marked `[unverified — no KB access]`.
+**Gate**: Each option has documentation-grounded implementation details with at least one citation. KB mode: `[PageID]`. Web mode: `[source](URL)`. If neither is available, mark every technical claim `[unverified]`.
 
-**Minimum**: At least 2 parallel `search_knowledge` calls per phase. Each option in Phase 3 must cite at least 2 distinct KB sources (or 2 `[unverified]` tags). If you have fewer, you haven't searched enough — add queries.
+**Minimum**: At least 2 parallel lookups per phase. Each option in Phase 3 must cite at least 2 distinct sources. If you have fewer, you haven't searched enough — add queries.
 
 ### Phase 3: Design Next Experiment
 
