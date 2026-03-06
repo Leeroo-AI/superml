@@ -18,6 +18,10 @@ PLUGIN_DIR = Path(__file__).resolve().parent.parent
 LOG_DIR = PLUGIN_DIR / "test-logs"
 LOG_DIR.mkdir(exist_ok=True)
 
+# Global flag: when True, strip LEEROOPEDIA_API_KEY from plugin runs
+# so skills fall back to web mode
+NO_KB = False
+
 BASELINE_MAX_TURNS = 15
 PLUGIN_MAX_TURNS = 20
 BASELINE_TIMEOUT = 600   # 10 min
@@ -695,6 +699,10 @@ def run_claude(prompt: str, test_id: str, mode: str, max_turns: int,
         f"{Path.home() / '.local/bin'}:{Path.home() / 'miniconda3/bin'}"
         f":{env.get('PATH', '')}"
     )
+
+    # In no-kb mode, strip the API key so skills fall back to web mode
+    if NO_KB and use_plugin:
+        env.pop("LEEROOPEDIA_API_KEY", None)
 
     cmd = [
         "claude",
@@ -1775,6 +1783,7 @@ def save_round_summary(judge_results: list, refine1: dict, refine2: dict,
     """Save the complete round summary."""
     summary = {
         "round": round_num,
+        "mode": "web" if NO_KB else "kb",
         "tests": len(judge_results),
         "judge_results": judge_results,
         "refine_pass1": refine1,
@@ -1811,8 +1820,9 @@ def run_full_pipeline(test_ids: list[str] | None = None):
     round_dir = LOG_DIR / f"round{round_num}"
     round_dir.mkdir(exist_ok=True)
 
+    mode_label = "WEB MODE (no KB)" if NO_KB else "KB MODE"
     print(f"\n{'='*70}")
-    print(f"ROUND {round_num} — A/B Quality Evaluation")
+    print(f"ROUND {round_num} — A/B Quality Evaluation — {mode_label}")
     print(f"{'='*70}")
 
     all_judge_results = []
@@ -2026,8 +2036,17 @@ def run_full_pipeline(test_ids: list[str] | None = None):
 
 
 def main():
-    if len(sys.argv) > 1:
-        test_ids = sys.argv[1:]
+    global NO_KB
+    args = [a for a in sys.argv[1:] if not a.startswith("--")]
+    flags = [a for a in sys.argv[1:] if a.startswith("--")]
+
+    if "--no-kb" in flags:
+        NO_KB = True
+        print(">>> NO-KB MODE: LEEROOPEDIA_API_KEY will be stripped from "
+              "plugin runs. Skills will use web fallback.")
+
+    if args:
+        test_ids = args
         valid = [t["id"] for t in TESTS]
         invalid = [t for t in test_ids if t not in valid]
         if invalid:
