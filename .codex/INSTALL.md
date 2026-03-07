@@ -1,4 +1,4 @@
-# Leeroopedia Plugin — Codex Installation
+# SuperML Plugin — Codex Installation
 
 ## Prerequisites
 
@@ -12,13 +12,13 @@
 
 1. Clone the plugin:
    ```bash
-   git clone https://github.com/leeroo-ai/leeroopedia-plugin.git
+   git clone https://github.com/leeroo-ai/superml.git
    ```
 
 2. Symlink skills into Codex's skill directory:
    ```bash
    mkdir -p ~/.agents/skills
-   ln -sf "$(pwd)/leeroopedia-plugin/skills" ~/.agents/skills/leeroopedia
+   ln -sf "$(pwd)/superml/skills" ~/.agents/skills/superml
    ```
 
 3. Configure the MCP server. Add to your Codex MCP config:

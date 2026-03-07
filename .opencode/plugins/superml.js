@@ -1,7 +1,7 @@
 /**
- * Leeroopedia plugin for OpenCode.ai
+ * SuperML plugin for OpenCode.ai
  *
- * Injects Leeroopedia bootstrap context via system prompt transform.
+ * Injects SuperML bootstrap context via system prompt transform.
  * Skills are discovered via OpenCode's native skill tool from symlinked directory.
  */
 
@@ -32,12 +32,12 @@ const extractAndStripFrontmatter = (content) => {
   return { frontmatter, content: body };
 };
 
-export const LeeroopediaPlugin = async ({ client, directory }) => {
-  const leeroopediaSkillsDir = path.resolve(__dirname, '../../skills');
+export const SuperMLPlugin = async ({ client, directory }) => {
+  const supermlSkillsDir = path.resolve(__dirname, '../../skills');
 
   // Helper to generate bootstrap content
   const getBootstrapContent = () => {
-    const skillPath = path.join(leeroopediaSkillsDir, 'using-leeroopedia', 'SKILL.md');
+    const skillPath = path.join(supermlSkillsDir, 'using-superml', 'SKILL.md');
     if (!fs.existsSync(skillPath)) return null;
 
     const fullContent = fs.readFileSync(skillPath, 'utf8');
@@ -49,12 +49,12 @@ When skills reference tools you don't have, substitute OpenCode equivalents:
 - \`Read\`, \`Write\`, \`Edit\`, \`Bash\` → Your native tools
 
 **Skills location:**
-Leeroopedia skills are available via OpenCode's native \`skill\` tool.`;
+SuperML skills are available via OpenCode's native \`skill\` tool.`;
 
     return `<EXTREMELY_IMPORTANT>
-You have access to Leeroopedia.
+You have access to SuperML.
 
-**IMPORTANT: The using-leeroopedia skill content is included below. It is ALREADY LOADED - you are currently following it. Do NOT use the skill tool to load "using-leeroopedia" again - that would be redundant.**
+**IMPORTANT: The using-superml skill content is included below. It is ALREADY LOADED - you are currently following it. Do NOT use the skill tool to load "using-superml" again - that would be redundant.**
 
 ${content}
 

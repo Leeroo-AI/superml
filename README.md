@@ -1,4 +1,4 @@
-# Leeroopedia
+# SuperML
 
 An ML engineering plugin for AI coding agents.
 
@@ -45,20 +45,20 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
 ### Claude Code
 
 ```bash
-claude plugin add --from-github leeroo-ai/leeroopedia-plugin
+claude plugin add --from-github leeroo-ai/superml
 ```
 
 Or install manually:
 
 ```bash
-git clone https://github.com/leeroo-ai/leeroopedia-plugin.git
-claude plugin add ./leeroopedia-plugin
+git clone https://github.com/leeroo-ai/superml.git
+claude plugin add ./superml
 ```
 
 ### Cursor
 
 ```bash
-git clone https://github.com/leeroo-ai/leeroopedia-plugin.git
+git clone https://github.com/leeroo-ai/superml.git
 # Cursor auto-detects .cursor-plugin/plugin.json
 ```
 
@@ -73,8 +73,8 @@ See [.opencode/INSTALL.md](.opencode/INSTALL.md).
 ### Gemini CLI
 
 ```bash
-git clone https://github.com/leeroo-ai/leeroopedia-plugin.git
-gemini extension add ./leeroopedia-plugin/gemini-extension.json
+git clone https://github.com/leeroo-ai/superml.git
+gemini extension add ./superml/gemini-extension.json
 ```
 
 ### Alternative: Remote MCP (no local install)
@@ -110,7 +110,7 @@ If it's working, your agent will call Leeroopedia tools and cite sources with `[
 | [ml-iterate](skills/ml-iterate/SKILL.md) | Ranked next steps when results aren't where you want them |
 | [ml-experiment](skills/ml-experiment/SKILL.md) | Track experiments — hypotheses, results, and learnings across sessions |
 | [ml-research](skills/ml-research/SKILL.md) | Deep-dive into ML topics, compare approaches, survey frameworks |
-| [using-leeroopedia](skills/using-leeroopedia/SKILL.md) | Loaded at session start — wires up skills to KB tools and sets quality standards |
+| [using-superml](skills/using-superml/SKILL.md) | Loaded at session start — wires up skills to KB tools and sets quality standards |
 <!-- END_SKILLS_TABLE -->
 
 ### Agent

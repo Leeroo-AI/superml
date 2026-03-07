@@ -1,4 +1,4 @@
-# Leeroopedia Plugin — OpenCode Installation
+# SuperML Plugin — OpenCode Installation
 
 ## Prerequisites
 
@@ -12,21 +12,21 @@
 
 1. Clone the plugin:
    ```bash
-   git clone https://github.com/leeroo-ai/leeroopedia-plugin.git
+   git clone https://github.com/leeroo-ai/superml.git
    ```
 
 2. Symlink the OpenCode plugin and skills:
    ```bash
-   PLUGIN_DIR="$(pwd)/leeroopedia-plugin"
+   PLUGIN_DIR="$(pwd)/superml"
    OPENCODE_DIR="${OPENCODE_CONFIG_DIR:-$HOME/.config/opencode}"
 
    # Symlink plugin
    mkdir -p "$OPENCODE_DIR/plugins"
-   ln -sf "$PLUGIN_DIR/.opencode/plugins/leeroopedia.js" "$OPENCODE_DIR/plugins/leeroopedia.js"
+   ln -sf "$PLUGIN_DIR/.opencode/plugins/superml.js" "$OPENCODE_DIR/plugins/superml.js"
 
    # Symlink skills
    mkdir -p "$OPENCODE_DIR/skills"
-   ln -sf "$PLUGIN_DIR/skills" "$OPENCODE_DIR/skills/leeroopedia"
+   ln -sf "$PLUGIN_DIR/skills" "$OPENCODE_DIR/skills/superml"
    ```
 
 3. Configure MCP. Add to your OpenCode config:

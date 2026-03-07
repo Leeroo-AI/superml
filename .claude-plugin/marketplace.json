@@ -1,5 +1,5 @@
 {
-  "name": "leeroopedia",
+  "name": "superml",
   "description": "ML/AI knowledge base plugin for Claude Code",
   "owner": {
     "name": "Leeroo AI",
@@ -7,7 +7,7 @@
   },
   "plugins": [
     {
-      "name": "leeroopedia",
+      "name": "superml",
       "description": "ML/AI knowledge base plugin: grounded answers from 27,667 pages across 1000+ frameworks",
       "version": "1.0.0",
       "source": "./"

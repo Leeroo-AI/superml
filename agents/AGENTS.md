@@ -9,7 +9,7 @@ These skills are:
  - ml-plan -> "skills/ml-plan/SKILL.md"
  - ml-research -> "skills/ml-research/SKILL.md"
  - ml-verify -> "skills/ml-verify/SKILL.md"
- - using-leeroopedia -> "skills/using-leeroopedia/SKILL.md"
+ - using-superml -> "skills/using-superml/SKILL.md"
 
 IMPORTANT: You MUST read the SKILL.md file whenever the description of the skills matches the user intent, or may help accomplish their task.
 
@@ -21,7 +21,7 @@ ml-iterate: `Use when the user is stuck, needs ranked next steps, or wants alter
 ml-plan: `Use when the user wants an implementation plan, architecture design, or multi-step ML pipeline — "build X", "implement X", "design X", "set up X"`
 ml-research: `Use when the user wants to understand an ML/AI topic, compare approaches, or survey framework capabilities — "how does X work?", "compare X vs Y"`
 ml-verify: `Use when the user wants to verify code, config, or math before running — or proactively before any expensive training job or deployment`
-using-leeroopedia: `Use when starting any conversation involving ML/AI — establishes how to use Leeroopedia KB tools and workflow skills`
+using-superml: `Use when starting any conversation involving ML/AI — establishes how to use Leeroopedia KB tools and workflow skills`
 </available_skills>
 
 Paths referenced within SKILL folders are relative to that SKILL. For example the ml-plan `examples/config.yaml` would be referenced as `ml-plan/examples/config.yaml`.
