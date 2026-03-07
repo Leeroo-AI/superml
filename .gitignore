@@ -6,3 +6,7 @@ node_modules/
 test-logs/
 .env
 scripts/generate_upload_url.py
+scripts/synth_data_pipeline/
+scripts/judge_prompt.md
+scripts/test_interactive.py
+marlink-data/
