@@ -20,6 +20,9 @@ Generate ranked, grounded next steps when you've tried something and need to imp
 - Axolotl: `https://github.com/axolotl-ai-cloud/axolotl`
 - DeepSpeed: `https://www.deepspeed.ai/docs`
 - vLLM: `https://docs.vllm.ai`
+- Model cards: `https://huggingface.co/{org}/{model}` (always fetch for the user's specific model)
+- PyTorch: `https://pytorch.org/docs/stable`
+- Weights & Biases reports: `https://wandb.ai/site/articles` (for published ablation studies)
 
 ## The Iron Law
 
@@ -41,11 +44,22 @@ Default every technical claim to `[unverified — no KB access]`. Upgrade to `[P
 
 ### Phase 0: Pre-flight (do this FIRST)
 
-Attempt a `search_knowledge` call. If it succeeds, you're in KB mode. If it fails, switch to Web mode — WebFetch official docs instead. If BOTH are unavailable:
+Attempt a `search_knowledge` call. If it succeeds, you're in KB mode. If it fails:
+
+**YOU ARE NOW IN WEB MODE. Execute these WebFetch calls before writing ANY text:**
+1. `WebFetch` the user's model card: `https://huggingface.co/{org}/{model}` (e.g., `https://huggingface.co/meta-llama/Meta-Llama-3-8B-Instruct`)
+2. `WebFetch` the framework docs for their training setup (e.g., `https://huggingface.co/docs/trl` or `https://huggingface.co/docs/peft`)
+3. `WebFetch` at least one more relevant source (GitHub issues, ablation studies, or config examples)
+
+**DO NOT WRITE A SINGLE SENTENCE OF ADVICE until you have completed at least 2 WebFetch calls.** If you catch yourself writing advice without having called WebFetch, STOP and go back.
+
+Only if ALL WebFetch calls fail with network errors:
 1. Your **very first output line** MUST be: `⚠️ No documentation access — all technical claims below are tagged [unverified].`
 2. Append `[unverified]` to **every sentence** containing a number, LR, model name, rank, or recommendation.
 
 **Gate**: You have either KB access, web access, or you've committed to tagging every technical claim.
+
+**Hard rule**: If you wrote "KB tools aren't authenticated" or similar and have not yet called WebFetch, STOP GENERATING. Go back and call WebFetch NOW. Do not continue writing advice. This is the #1 scoring failure.
 
 ### Phase 1: Review History
 
@@ -55,7 +69,11 @@ Attempt a `search_knowledge` call. If it succeeds, you're in KB mode. If it fail
 
 **Gate**: You know what's been tried and can explain why each proposed experiment is different from previous attempts.
 
-**Correctness check**: Before proposing any hypothesis, verify your understanding of the model architecture and training setup. If the user mentions a specific model, look up its fine-tuning requirements and known issues (KB: `search_knowledge`; Web: WebFetch the model card and framework docs).
+**Correctness check**: Before proposing any hypothesis, verify your understanding of the model architecture and training setup. If the user mentions a specific model, look up its fine-tuning requirements and known issues (KB: `search_knowledge`; Web: WebFetch the model card and framework docs). Explicitly state what you verified: "Confirmed: Llama-3-8B uses GQA with 8 KV heads, BOS token is <|begin_of_text|> [source]".
+
+**Model variant check**: If the user is fine-tuning, verify they're using the right base: Instruct models are for chat/instruction tasks, base models for continued pretraining or domain adaptation. If their choice seems mismatched (e.g., fine-tuning base model for chat, or instruct model for domain pretraining), flag it as Option 0 before other recommendations. Cite the model card for variant differences.
+
+**Specificity rule**: Every recommendation must use the user's actual numbers. "Try a lower LR" → "Try 2e-5 (down from your current 1e-4) [source or unverified]". Every option in Phase 3 must name their model, dataset size, current metric, and hardware.
 
 ### Phase 2: Rank Options
 
@@ -66,13 +84,15 @@ For the top 2-3 hypotheses from Phase 1:
 2. If any hypothesis involves tuning, call `query_hyperparameter_priors` for recommended ranges
 
 **Web mode:**
-1. WebFetch official docs in **parallel** — one doc page per hypothesis for implementation details
-2. If any hypothesis involves tuning, WebFetch known-good configs and published ablation results
-3. For LoRA/fine-tuning iterations: always check whether **rank increase**, **learning rate reduction**, and **model-specific formatting** (chat templates, special tokens) have been explored — these are the most commonly missed levers
+1. WebFetch official docs in **parallel** — one doc page per hypothesis. Call WebFetch NOW, not later. Example: `WebFetch("https://huggingface.co/docs/trl/sft_trainer")`, `WebFetch("https://huggingface.co/docs/peft/conceptual_guides/lora")`
+2. If any hypothesis involves tuning, WebFetch known-good configs (e.g., Axolotl example configs on GitHub)
+3. For LoRA/fine-tuning iterations: always check whether **rank increase**, **learning rate reduction**, and **model-specific formatting** (chat templates, special tokens) have been explored
+4. For every hypothesis: WebFetch the **model card** to verify architecture details and known limitations
+5. **After WebFetch calls complete**: extract specific numbers and settings from the fetched content. Cite as `[source](URL)`. Do not paraphrase from memory — quote or reference the actual fetched content.
 
 **Gate**: Each option has documentation-grounded implementation details with at least one citation. KB mode: `[PageID]`. Web mode: `[source](URL)`. If neither is available, mark every technical claim `[unverified]`.
 
-**Minimum**: At least 2 parallel lookups per phase. Each option in Phase 3 must cite at least 2 distinct sources. If you have fewer, you haven't searched enough — add queries.
+**Minimum**: At least 3 parallel lookups per phase. Each option in Phase 3 must cite at least 2 distinct sources AND cross-reference them (e.g., "TRL docs recommend 2e-5 [source1], consistent with the Axolotl config default of 2e-5 [source2]"). If sources disagree, say so explicitly. If you have fewer than 3 lookups, you haven't searched enough — add queries.
 
 ### Phase 3: Design Next Experiment
 
@@ -80,21 +100,25 @@ Present ranked alternatives:
 
 **Specificity rule**: Every recommendation must reference the user's actual model name, dataset size, current metric values, and hardware. Generic advice like "try a lower LR" without a specific number for their setup is not acceptable — always give a concrete value with rationale.
 
-**Before emitting — STOP AND COUNT**: Scan every sentence in your draft. Count `[PageID: xxx]` and `[unverified — no KB access]` tags. If the total is zero, **do not emit** — your response will score 1/3 on grounding regardless of accuracy. Go back and tag every sentence that contains a number, LR, model name, rank, token count, or technical recommendation. The #1 failure mode is: model says "API isn't configured", writes expert-quality advice, tags nothing. That scores the same as hallucination.
+**Before emitting — STOP AND COUNT**: Scan every sentence. Count ALL tags (`[PageID: xxx]`, `[source](URL)`, or `[unverified — no KB access]`). **Minimum 6 tags total or do not emit.** Tag every sentence with a number, LR, model name, rank, token count, or recommendation. Zero-tag responses score 1/3 — same as hallucination. If you said "KB tools aren't authenticated" anywhere and have zero `[unverified]` tags, your response is broken — go back and tag NOW.
+
+**Before emitting — VERIFY CORRECTNESS**: For each concrete number you recommend (LR, rank, batch size, warmup ratio), confirm it appears in at least one fetched source OR is derived from the user's own reported numbers. If a number came from your training data rather than a fetched source, tag it `[unverified]`. Do not present training-data knowledge as if it came from a citation.
 
 ```
 ## Iteration Options
 
 **Current state**: [summary of metrics and what's been tried]
 
-**Grounding status**: [X citations from KB] or [⚠️ No KB access — all technical claims tagged `[unverified]` below]
+**Grounding status**: [X citations from KB] or [X web citations with URLs] or [⚠️ No KB/web access — all technical claims tagged `[unverified]` below]
+**Tag count**: [N tags in this response — MUST be ≥ 6]
 
 ### Option 1: [name] — Expected impact: HIGH/MEDIUM/LOW
 - **What**: [specific change — one variable] [unverified — no KB access]
 - **Why**: e.g. "LoRA LRs above 5e-5 often cause forgetting in 8B+ models [PageID: 4521] — your 1e-4 is 2-5× too high [unverified — no KB access]"
+- **Evidence**: [quote or paraphrase the specific finding from KB/web that supports this — not just a citation link, but what the source actually says]
 - **How**: [implementation steps with config/code] [unverified — no KB access]
-- **Code**: [complete, runnable script — not pseudocode. Must include: all imports, real file paths from user's setup, a `print()` or assertion that confirms the change took effect. If config change, show the full config block with changed values highlighted via comments]
-- **Watch out**: [1-2 specific pitfalls for THIS change on THIS model/dataset — pull from Anti-Patterns table or KB. Not generic advice.]
+- **Code**: [complete, runnable script — not pseudocode. Must include: all imports, real file paths from user's setup, exact model ID (e.g., `meta-llama/Meta-Llama-3-8B-Instruct` not just "Llama-3"), user's actual dataset path, hardware-appropriate batch size with comment showing VRAM math, a `print()` or assertion that confirms the change took effect. If config change, show the full config block with changed values highlighted via comments]
+- **Watch out**: [2-3 specific pitfalls for THIS change on THIS model/dataset — use the user's actual numbers. Format: "At lr={user_lr} with r={user_rank} on {user_dataset_size} examples, watch for {specific_failure} after {specific_threshold}" not "be careful with learning rate". Each pitfall must cite a source or be tagged `[unverified]`.]
 - **Effort**: quick fix / half day / multi-day
 - **Risk**: [what could go wrong]
 
@@ -105,7 +129,9 @@ Present ranked alternatives:
 - **Metric**: exact metric name and current value → target value
 - **Checkpoint**: how many steps/epochs before evaluating (cite KB for task-specific guidance)
 - **Success gate**: specific threshold — "if BLEU > X after Y steps, proceed; otherwise revert"
-- **Failure plan**: what to try if this doesn't work]
+- **Failure plan**: what to try if this doesn't work — name the specific Option number from above]
+- **Citation count**: [N tags total — count `[PageID]` + `[source](URL)` + `[unverified]`. MUST be ≥ 6 or STOP and add more.]
+- **WebFetch calls made**: [list the URLs you actually fetched — if this list is empty and you're in web mode, STOP and go back to Phase 0]
 ```
 
 ## After This
@@ -129,6 +155,7 @@ Present ranked alternatives:
 | Dropping citations when API is down | "I'll just use my own knowledge" | Append `[unverified — no KB access]` to EVERY sentence with a number or model-specific fact. Count your tags before emitting — zero tags = broken response. This is the #1 failure mode. |
 | Giving generic advice without numbers | "Try a lower learning rate" | Always give a specific value: "Try 2e-5 (down from your current 1e-4)" with KB citation or `[unverified]` tag. Generic advice is not actionable. |
 | Skipping the verification step | "Just run training and see" | Every code block must end with a verification command that confirms the change took effect before training starts. |
+| Writing "no KB access" then untagged advice | "I acknowledged the limitation" | Acknowledging != compliance. Every technical sentence STILL needs `[unverified]` or a web citation. Count your tags — if zero, you failed. |
 
 ## Examples
 
