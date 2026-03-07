@@ -94,10 +94,11 @@ You get the MCP tools (memory) but not the workflow skills (process).
 Start a conversation and try something like:
 
 ```
-Verify my LoRA config: r=64, alpha=16, lr=5e-3, target_modules=q_proj,v_proj
+I'm fine-tuning Llama 3.1 8B on 50k instruction pairs with 1xA100 80GB.
+Set up the full training config — QLoRA, proper chat template, loss masking on prompts.
 ```
 
-If it's working, your agent will call Leeroopedia tools and cite sources with `[PageID]` tags in its response.
+If it's working, your agent will ground its answer in documentation (KB citations or web sources), catch common pitfalls before they waste a training run, and give you a runnable config.
 
 ## What's Inside
 
