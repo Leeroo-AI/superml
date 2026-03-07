@@ -19,14 +19,16 @@ Works with Claude Code, Cursor, Codex, OpenCode, and Gemini CLI.
 
 ## Prerequisites
 
-### 1. Get an API Key
+### 1. Get an API Key (optional, recommended)
 
-Head to [app.leeroopedia.com](https://app.leeroopedia.com/dashboard), grab an API key from the dashboard.
+The plugin works without an API key — skills use web search to ground answers in official docs. With a key, your agent gets access to the Leeroopedia knowledge base (27k+ pages, faster and more precise lookups).
+
+To get a key: head to [app.leeroopedia.com](https://app.leeroopedia.com/dashboard), grab one from the dashboard.
 
 - Keys look like `kpsk_...`
 - **$20 free credit** on signup, no credit card needed
 
-### 2. Set the Environment Variable
+### 2. Set the Environment Variable (if you have a key)
 
 ```bash
 export LEEROOPEDIA_API_KEY=kpsk_your_key_here
