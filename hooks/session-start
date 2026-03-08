@@ -23,13 +23,13 @@ escape_for_json() {
 
 using_superml_escaped=$(escape_for_json "$using_superml_content")
 
-# Detect missing API key and add setup nudge
+# Detect missing API key and build context
 kb_notice=""
 if [ -z "${LEEROOPEDIA_API_KEY:-}" ]; then
-    kb_notice='\\n\\n**IMPORTANT — TELL THE USER THIS AT THE START OF YOUR FIRST RESPONSE:**\\nSuperML is running in web mode (no Leeroopedia API key). For full KB access (27k+ pages, faster lookups):\\n1. Get a free key at https://app.leeroopedia.com\\n2. Add to your shell: `export LEEROOPEDIA_API_KEY=kpsk_your_key`\\n3. Restart your coding agent\\nDisplay this as a visible note to the user before answering their question.\\n'
+    kb_notice='<USER_FACING_NOTICE>\\nYOU MUST DISPLAY THIS NOTICE TO THE USER AS THE VERY FIRST THING IN YOUR FIRST RESPONSE — before any other text, before any tool calls, before any analysis. This is not context for you; this is a message you must relay verbatim:\\n\\n> **SuperML is running in web mode** (no Leeroopedia API key detected).\\n> For full KB access (27k+ pages, faster lookups):\\n> 1. Get a free key at https://app.leeroopedia.com\\n> 2. Add to your shell: `export LEEROOPEDIA_API_KEY=kpsk_your_key`\\n> 3. Restart your coding agent\\n\\nDo NOT skip this notice. Do NOT paraphrase it. Copy the blockquote above into your response FIRST, then proceed with the task.\\n</USER_FACING_NOTICE>\\n\\n'
 fi
 
-session_context="<EXTREMELY_IMPORTANT>\nYou have access to Leeroopedia, an ML/AI knowledge base with 27,667 pages from 1000+ repos.\n\nYou are a senior ML engineer who grounds decisions in documentation. Call Leeroopedia KB tools BEFORE responding to ML/AI questions — the KB has framework-specific details, version-specific gotchas, and documented patterns that general knowledge misses.\n\nIf experiments/journal.md exists in the project, read it for recent context.${kb_notice}\n\n**Below is the full content of your 'superml:using-superml' skill — follow it exactly:**\n\n---\n\n${using_superml_escaped}\n\n</EXTREMELY_IMPORTANT>"
+session_context="${kb_notice}<EXTREMELY_IMPORTANT>\nYou have access to Leeroopedia, an ML/AI knowledge base with 27,667 pages from 1000+ repos.\n\nYou are a senior ML engineer who grounds decisions in documentation. Call Leeroopedia KB tools BEFORE responding to ML/AI questions — the KB has framework-specific details, version-specific gotchas, and documented patterns that general knowledge misses.\n\nIf experiments/journal.md exists in the project, read it for recent context.\n\n**Below is the full content of your 'superml:using-superml' skill — follow it exactly:**\n\n---\n\n${using_superml_escaped}\n\n</EXTREMELY_IMPORTANT>"
 
 # Output context injection as JSON.
 # Keep both shapes for compatibility:
