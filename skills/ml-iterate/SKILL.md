@@ -50,6 +50,7 @@ Attempt a `search_knowledge` call. If it succeeds, you're in KB mode. If it fail
 1. `WebFetch` the user's model card: `https://huggingface.co/{org}/{model}` (e.g., `https://huggingface.co/meta-llama/Meta-Llama-3-8B-Instruct`)
 2. `WebFetch` the framework docs for their training setup (e.g., `https://huggingface.co/docs/trl` or `https://huggingface.co/docs/peft`)
 3. `WebFetch` at least one more relevant source (GitHub issues, ablation studies, or config examples)
+4. **Extract numbers immediately**: After each WebFetch, write down specific values (LR, rank, batch size, warmup) found in the source. These become your citation anchors — quote them in Phase 3. A URL without an extracted number is not a useful citation.
 
 **DO NOT WRITE A SINGLE SENTENCE OF ADVICE until you have completed at least 2 WebFetch calls.** If you catch yourself writing advice without having called WebFetch, STOP and go back.
 
@@ -73,7 +74,9 @@ Only if ALL WebFetch calls fail with network errors:
 
 **Model variant check**: If the user is fine-tuning, verify they're using the right base: Instruct models are for chat/instruction tasks, base models for continued pretraining or domain adaptation. If their choice seems mismatched (e.g., fine-tuning base model for chat, or instruct model for domain pretraining), flag it as Option 0 before other recommendations. Cite the model card for variant differences.
 
-**Specificity rule**: Every recommendation must use the user's actual numbers. "Try a lower LR" → "Try 2e-5 (down from your current 1e-4) [source or unverified]". Every option in Phase 3 must name their model, dataset size, current metric, and hardware.
+**Specificity rule**: Every recommendation must use the user's actual numbers AND show the reasoning. "Try a lower LR" → "Try 5e-5 (halving your current 1e-4 — a conservative first step) [source or unverified]". Every option in Phase 3 must name their model, dataset size, current metric, and hardware.
+
+**Proportional change rule**: Never recommend changing a hyperparameter by more than 3× in a single experiment unless a fetched source explicitly recommends a larger jump for this scenario. A 5× LR drop risks underfitting just as a 5× increase risks overfitting. Show the math: "Current: 1e-4 → Proposed: 5e-5 (2× reduction)".
 
 ### Phase 2: Rank Options
 
@@ -92,7 +95,9 @@ For the top 2-3 hypotheses from Phase 1:
 
 **Gate**: Each option has documentation-grounded implementation details with at least one citation. KB mode: `[PageID]`. Web mode: `[source](URL)`. If neither is available, mark every technical claim `[unverified]`.
 
-**Minimum**: At least 3 parallel lookups per phase. Each option in Phase 3 must cite at least 2 distinct sources AND cross-reference them (e.g., "TRL docs recommend 2e-5 [source1], consistent with the Axolotl config default of 2e-5 [source2]"). If sources disagree, say so explicitly. If you have fewer than 3 lookups, you haven't searched enough — add queries.
+**Minimum**: At least 3 parallel lookups per phase. Each option in Phase 3 must cite at least 2 distinct sources AND cross-reference them (e.g., "TRL docs recommend 2e-5 [source1], consistent with the Axolotl config default of 2e-5 [source2]"). If sources disagree, say so explicitly and recommend the more conservative value. If you have fewer than 3 lookups, you haven't searched enough — add queries.
+
+**Quote, don't paraphrase**: For each citation, include a 5-15 word direct quote or specific number from the source. "[source](URL)" alone is insufficient — write "TRL docs state 'learning_rate=2e-4 for adapters' [source](URL)". This proves you read the source and prevents hallucinated citations.
 
 ### Phase 3: Design Next Experiment
 
@@ -115,10 +120,10 @@ Present ranked alternatives:
 ### Option 1: [name] — Expected impact: HIGH/MEDIUM/LOW
 - **What**: [specific change — one variable] [unverified — no KB access]
 - **Why**: e.g. "LoRA LRs above 5e-5 often cause forgetting in 8B+ models [PageID: 4521] — your 1e-4 is 2-5× too high [unverified — no KB access]"
-- **Evidence**: [quote or paraphrase the specific finding from KB/web that supports this — not just a citation link, but what the source actually says]
+- **Evidence**: [direct quote from fetched source, 10-30 words, with citation. Example: PEFT docs state "rsLoRA uses rank-proportional scaling, stabilizing training at higher ranks" [source](URL). If no source found, write: "No direct source found — recommendation based on [reasoning] [unverified]"]
 - **How**: [implementation steps with config/code] [unverified — no KB access]
-- **Code**: [complete, runnable script — not pseudocode. Must include: all imports, real file paths from user's setup, exact model ID (e.g., `meta-llama/Meta-Llama-3-8B-Instruct` not just "Llama-3"), user's actual dataset path, hardware-appropriate batch size with comment showing VRAM math, a `print()` or assertion that confirms the change took effect. If config change, show the full config block with changed values highlighted via comments]
-- **Watch out**: [2-3 specific pitfalls for THIS change on THIS model/dataset — use the user's actual numbers. Format: "At lr={user_lr} with r={user_rank} on {user_dataset_size} examples, watch for {specific_failure} after {specific_threshold}" not "be careful with learning rate". Each pitfall must cite a source or be tagged `[unverified]`.]
+- **Code**: [complete, runnable script. Requirements: (1) all imports, (2) exact model ID, (3) user's actual dataset path, (4) hardware-appropriate batch size with VRAM math comment, (5) `# CHANGED: old_value → new_value` comment on every modified line, (6) a print/assert that confirms the change before training starts. If config change, show full config with `# CHANGED` markers.]
+- **Watch out**: [2-3 specific pitfalls. Each MUST follow this format: "At {param}={user_value} with {context}, watch for {metric} {direction} after {N} steps/epochs because {mechanism} [citation]." Example: "At lr=5e-5 with r=32 on 50k examples, watch for eval loss rising after epoch 2 because cosine decay may undershoot — monitor every 500 steps [unverified]." Generic warnings like 'be careful with learning rate' score 0.]
 - **Effort**: quick fix / half day / multi-day
 - **Risk**: [what could go wrong]
 
@@ -132,6 +137,7 @@ Present ranked alternatives:
 - **Failure plan**: what to try if this doesn't work — name the specific Option number from above]
 - **Citation count**: [N tags total — count `[PageID]` + `[source](URL)` + `[unverified]`. MUST be ≥ 6 or STOP and add more.]
 - **WebFetch calls made**: [list the URLs you actually fetched — if this list is empty and you're in web mode, STOP and go back to Phase 0]
+- **Numbers sourced vs unsourced**: [list every concrete number in your response and whether it came from a fetched source or is unverified. Example: "lr=5e-5 (from TRL docs), r=64 (unverified), warmup=0.05 (from Axolotl config)". This is your correctness audit.]
 ```
 
 ## After This
@@ -156,6 +162,8 @@ Present ranked alternatives:
 | Giving generic advice without numbers | "Try a lower learning rate" | Always give a specific value: "Try 2e-5 (down from your current 1e-4)" with KB citation or `[unverified]` tag. Generic advice is not actionable. |
 | Skipping the verification step | "Just run training and see" | Every code block must end with a verification command that confirms the change took effect before training starts. |
 | Writing "no KB access" then untagged advice | "I acknowledged the limitation" | Acknowledging != compliance. Every technical sentence STILL needs `[unverified]` or a web citation. Count your tags — if zero, you failed. |
+| Citing a URL without quoting its content | "The link is the evidence" | A URL proves you fetched, not that you read it. Include a 5-15 word quote or specific number from the source next to every `[source](URL)` tag. |
+| Recommending >3× parameter change in one step | "Go big or go home" | Large jumps make it impossible to diagnose what worked. Halve or double — never 5× in one experiment. Show the math. |
 
 ## Examples
 

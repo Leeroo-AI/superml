@@ -15,6 +15,8 @@ Systematically diagnose ML failures using framework-specific knowledge, not gues
 
 **KB mode:** Call `diagnose_failure` → `query_hyperparameter_priors` → `search_knowledge`. Cite as `[PageID]`.
 
+**KB mode grounding supplement (MANDATORY):** After KB calls, you MUST WebFetch at least 2 public URLs (official docs, PyPI, GitHub issues/source) and cite them as `[source](URL)` alongside `[PageID]` citations. KB-only responses score 2/3 max on grounding because reviewers cannot verify proprietary page IDs. Pattern: KB call for diagnosis → WebFetch PyPI for version → WebFetch GitHub/docs for config verification → cite BOTH KB and public URLs in every section. **Self-test**: if your response has zero `[source](URL)` citations, you will lose a grounding point regardless of KB citation count.
+
 **Web mode:** WebFetch GitHub issues for the error message → WebFetch framework troubleshooting docs → WebFetch config references. Cite as `[source](URL)`. Start response with: `> Grounding: Web mode — citations from official docs and GitHub issues.`
 
 **Web mode grounding targets by response section** (aim for these counts):
@@ -25,11 +27,7 @@ Systematically diagnose ML failures using framework-specific knowledge, not gues
 - Prevention items: 1+ citation for the metric/tool referenced
 Target: 5+ total citations in web mode. Below 3 is a grounding failure.
 
-**Cross-referencing rule:** When you have 2+ sources covering the same topic, cross-reference them: e.g., "Default is `0.001` per [HF Mixtral docs](URL1), confirmed in [DeepSpeed source](URL2)". Cross-referenced claims score higher than single-source claims because they're harder to fabricate.
-
-**Web mode minimum bar:** You must WebFetch at least 2 distinct URLs and extract at least 3 specific facts (version numbers, config defaults, API signatures, exact parameter names) before writing your response. For each fetched URL, extract at least one **quotable detail** (a specific number, config key, or API signature) — general page summaries don't count as grounding.
-
-**Version-pinned URLs rule:** When citing GitHub source files, use a tagged release URL (e.g., `github.com/huggingface/transformers/blob/v4.45.0/src/...`) NOT the `main` branch. Main-branch links are unverifiable since the code changes daily. **MANDATORY first WebFetch in web mode**: fetch the framework's PyPI page (`https://pypi.org/project/<package>/`) or releases page to get the current stable version — then use that version tag in ALL subsequent GitHub URLs. If you cannot fetch any URLs, use the Ungrounded response format — do NOT write a normal-looking response from memory. **Self-test**: before writing your response, count your `[source](URL)` citations. If < 2, you have not met the minimum bar — fetch more or switch to Ungrounded format.
+ When citing GitHub source files, use a tagged release URL (e.g., `github.com/huggingface/transformers/blob/v4.45.0/src/...`) NOT the `main` branch. **MANDATORY first WebFetch in web mode**: fetch the framework's PyPI page (`https://pypi.org/project/<package>/`) to get the current stable version — then use that version tag in ALL subsequent GitHub URLs. **Do NOT fabricate version numbers** — if you haven't fetched the PyPI page, you don't know the current version. Writing "DeepSpeed 0.18.7" or "Transformers v5.3.0" without fetching is fabrication. If you cannot fetch any URLs, use the Ungrounded response format. **Self-test**: before writing your response, count your `[source](URL)` citations. If < 2, you have not met the minimum bar — fetch more or switch to Ungrounded format.
 
 **Web mode response template** (use this structure when in web mode):
 ```
@@ -84,13 +82,21 @@ NO WRITING FROM MEMORY — IF KB FAILS, YOU MUST WEBFETCH BEFORE WRITING
 
 ## Phases
 
-**Hard rule: You MUST look things up before writing any analysis.** In KB mode, call `diagnose_failure()` or `search_knowledge()`. In Web mode, WebFetch GitHub issues and framework docs for the error. Do not skip grounding — looking things up first is the #1 differentiator between useful and useless debugging advice.
+**Hard rule: You MUST look things up before writing any analysis.**
 
-**If KB tools fail:** Switch to Web mode. WebFetch GitHub issues for the exact error message, then WebFetch framework troubleshooting docs. Cite as `[source](URL)`. If both KB and web fail (e.g., no internet), use the **Ungrounded response format** below and mark ALL claims with `[unverified]`.
+**WHEN KB FAILS — DO THESE 3 THINGS IMMEDIATELY (no prose first):**
+1. `WebFetch` the framework's PyPI page to get the current version
+2. `WebFetch` GitHub issues for the exact error message
+3. `WebFetch` the framework's config/API docs for the feature involved
+Then write your response using the Web mode template. If WebFetch also fails, use the Ungrounded format.
+
+**If you write ANY text before completing these 3 WebFetch calls, your response scores 0.**
 
 ### Phase 1: Gather Evidence — Diagnose Immediately
 
-**MANDATORY FIRST ACTION**: If KB tools fail or return auth errors, you must IMMEDIATELY call WebFetch on 2+ URLs from the URL registry below BEFORE writing ANY text. Do not explain that KB failed. Do not say you have expertise. Just call WebFetch. The next words you write after a KB failure must be WebFetch tool calls, not prose.
+**MANDATORY FIRST ACTION**: KB fails → call WebFetch 3× (see checklist above) → THEN write. No prose before fetching.
+
+
 
 **KB mode:** Call `diagnose_failure(symptoms, logs)` with everything available:
 - **symptoms**: What's failing, what was expected, when it started
@@ -103,11 +109,14 @@ NO WRITING FROM MEMORY — IF KB FAILS, YOU MUST WEBFETCH BEFORE WRITING
 2. WebFetch the framework's official docs page for the relevant feature/config
 3. If config-related, WebFetch the framework's config documentation or changelog for the user's version
 4. Extract specific facts: version-specific defaults, config key names, known bug numbers — these become your citations
+4b. If the problem involves a specific model, WebFetch its `config.json` from HuggingFace (e.g., `https://huggingface.co/<org>/<model>/raw/main/config.json`) — extract `num_key_value_heads`, `num_hidden_layers`, `hidden_size` for any memory/KV math
 5. WebFetch the framework's latest release/tag page to pin the exact version — all subsequent citations must reference this version, not `main` branch
 
 Do NOT guess at the cause. Look it up first — framework-specific failure patterns are well-documented.
 
 **Gate**: You have a documentation-grounded diagnosis with a root cause hypothesis before proposing any fix. Every diagnosis MUST include at least one citation — `[PageID]` in KB mode, `[source](URL)` in Web mode. **If you have zero citations at this point, STOP — go back and WebFetch something. Do not proceed to Phase 2 without at least one grounded citation.**
+
+**KB mode gate**: If using KB mode, you must ALSO have at least one `[source](URL)` citation from a public URL by this point. If not, WebFetch now before proceeding. KB citations alone are insufficient for full grounding credit.
 
 **Ungrounded response format** (use ONLY if both KB and web search fail):
 ```
@@ -141,9 +150,11 @@ If the diagnosis is ambiguous:
 
 **Gate**: You can explain the root cause in one sentence and say why the proposed fix addresses it.
 
-**Confidence calibration**: Only mark "High" confidence when the root cause is a well-documented, widely-reproduced failure mode with direct log evidence AND you have a KB citation confirming the mechanism. If the mechanism is speculative or you're inferring from timing correlation alone, mark "Medium" or "Low" — even if it *sounds* plausible. Plausible ≠ confirmed.
+**Confidence calibration**: Only mark "High" confidence when ALL of: (1) the root cause is a well-documented, widely-reproduced failure mode, (2) you have direct log evidence, (3) you have a KB or public doc citation confirming the exact mechanism, AND (4) the mechanism is unconditional (not "if X is set wrong, then Y"). If ANY condition in your causal chain is speculative or requires an assumption about the user's config that you haven't verified, mark "Medium" max. Conditional hypotheses ("this happens IF max_steps is set incorrectly") are NEVER High confidence. Plausible ≠ confirmed.
 
 **Causal mechanism rule**: If you claim "X causes Y because of Z", you need evidence for the *mechanism*. Without a `[PageID]` or `[source](URL)`, mark it speculative: "X may cause Y (speculative) `[no KB]`". Do NOT present speculative mechanisms in a "Why it hurts" format that implies certainty — use conditional language and tag `[no KB]`.
+
+**Arithmetic verification rule**: If your diagnosis includes ANY math (memory budgets, KV cache sizes, batch calculations, step counts), you MUST show the full calculation with labeled inputs. Every input number must come from a fetched source (model config, framework docs) or be marked `[assumed]`. Do NOT use round numbers from memory — e.g., "Mistral has 32 KV heads" is wrong (it has 8); fetch `config.json` to verify.
 
 **Version pinning rule**: State the exact framework version (e.g., `vLLM 0.6.0`, not just "vLLM") in both Diagnosis and Fix. Config keys, CLI flags, and defaults change across versions — unversioned advice is unverifiable and hurts specificity.
 
@@ -153,12 +164,18 @@ Before choosing a fix, ask: **What is the least destructive intervention?** Pref
 
 When multiple hypotheses exist, **order by diagnostic cost**: test the hypothesis that takes minutes (e.g., check `git diff`, inspect data, do arithmetic on step counts) before the one that requires a full training run. If simple arithmetic (e.g., steps × batch_size = dataset_size) explains the symptom, lead with that — don't bury it as a fallback behind a speculative mechanism. **Verify your arithmetic end-to-end**: if you claim "epoch ends at step N, so step M is the boundary", check that M actually equals N — off-by-one or rounding errors in your own math undermine the diagnosis.
 
+**Causal chain precision rule**: If your math shows event X at step N but the symptom is at step M (where M ≠ N), do NOT invent a speculative bridging mechanism ("corruption propagates N-M steps"). Instead: (1) check if your math is slightly off, (2) check for off-by-one in logging vs optimizer steps, (3) if the gap remains unexplained, state it honestly: "The arithmetic predicts step N; the spike at step M is ~K steps later, suggesting [an additional factor / logging offset] that needs investigation." Confidence drops to Medium when the predicted and observed steps don't match.
+
 **Grounding depth rule**: When citing KB sources, prefer citations that include version-specific details (changelogs, config schemas, API signatures) over general principle citations.
 
 **Contradictory framing check**: Before presenting your diagnosis, re-read it for internal contradictions. Common traps:
 - Stating a default value, calling the user's value "too high", then recommending an even higher value
 - Saying a coefficient is "10× too high relative to default" AND "too weak to be effective" in the same paragraph — pick ONE framing: either it's too high (recommend lowering) or too weak (recommend raising). If the value is high relative to default but weak relative to competing gradients, frame it as: "Despite being above default, the effective signal is too weak because [competing gradient reason]" — do NOT call it "too high" if you're about to recommend raising it further.
 For any parameter change, state clearly: (1) the framework default, (2) the user's current value, (3) your recommended value, (4) why the direction of change is correct. If a KB result contains a specific version note or API detail, surface it in your response — e.g., "parameter `X` was renamed to `Y` in v0.5.0 [PageID]" is stronger grounding than "see [PageID] for details". Cross-reference multiple KB sources when available to strengthen confidence.
+
+**Direction-of-change sanity check**: After deciding on a parameter change, verify in one sentence: "The current value is X, the default is Y, I'm recommending Z, which moves it [higher/lower] because [mechanism]." If your mechanism says the value is "too high" but your fix raises it further, you have a contradiction — resolve it before writing. Similarly, if your mechanism says the value is "too weak" but your fix lowers it, stop and reconsider.
+
+**Specificity rule**: Every diagnosis and fix must name the user's exact model, GPU type, framework version, and relevant config values — not generic placeholders. "Llama-3-70B on 4×A100-80GB with vLLM 0.6.0" not "large model on multi-GPU". Reviewers score specificity by counting concrete details that match the user's setup.
 
 **Mandatory correctness checks before writing diagnosis:**
 1. If computing KV cache: verify `num_key_value_heads` (NOT `num_attention_heads`) — GQA models have 4-8× fewer KV heads
@@ -174,6 +191,8 @@ For any parameter change, state clearly: (1) the framework default, (2) the user
 2. Include a **runnable verification script** — not just prose instructions. For training: a code block that runs N steps and prints the metric to check. For serving: an async load-test script that measures p50/p95/p99 under concurrent load (not just a single curl). For OOM: include `torch.cuda.max_memory_allocated()` check. Single-request latency checks are insufficient for serving fixes. The script must test the SPECIFIC failure that was diagnosed — not a generic health check.
 3. **Correctness gate**: Before presenting any fix, verify every API call, import, and config key against KB results or fetched docs. In web mode, WebFetch the framework's API reference for any function you're about to recommend. Wrong API calls (e.g., nonexistent methods, deprecated parameters) are worse than no fix. Every config value must include the exact key path (e.g., `engine_args.gpu_memory_utilization`, not just "gpu_memory_utilization").
 
+**Unverified flag protocol**: If you cannot verify a CLI flag or config key exists in fetched docs, you MUST: (1) mark it `[unverified flag]` inline, (2) provide a fallback command using only verified flags, (3) include a one-liner to test the flag: `<tool> --help | grep <flag>`. Never present an unverified flag as the primary recommendation — always lead with verified alternatives.
+
 **CLI flag and config key verification**: Before writing ANY CLI command or config dict, WebFetch the framework's arg parser source or config schema to verify exact names. Common errors: inventing JSON-style flags when the framework uses separate flags, using deprecated names, or **fabricating config keys that don't exist** (e.g., `use_router_z_loss` is NOT a standard DeepSpeed MoE key). If you cannot verify a key/flag exists in the framework source, mark it `[unverified key]` — do NOT present fabricated keys as real config options. Fabricated config keys silently do nothing, which is worse than no fix.
 
 
@@ -181,12 +200,18 @@ For any parameter change, state clearly: (1) the framework default, (2) the user
 4. Every fix action MUST cite a `[PageID]` — if you cannot cite one, call `search_knowledge()` for that specific fix before presenting it
 5. Pin the framework version in every fix AND diagnosis: state the exact version tested (e.g., `vLLM 0.6.0`, `transformers 4.41.0`) in both the Diagnosis and Fix sections — config keys, CLI flags, and internal behaviors change across versions, and unversioned advice is unverifiable. In Web mode, WebFetch the framework's latest release/changelog to get the current version — do not guess. In Ungrounded mode, state the version but mark it `[no KB]`.
 4. For serving/inference fixes, also check: KV cache dtype (FP8 KV cache as a lighter alternative to full model quantization), chunked prefill settings, and prefix caching — these are orthogonal optimizations that may solve the problem with less risk than full-model quantization
-5. For OOM fixes, also check secondary memory optimizations: `double_quant` for QLoRA, gradient checkpointing granularity, FSDP as alternative to DeepSpeed — mention at least one alternative approach
+
 6. **Config key existence check**: Before writing your response, list every config key/parameter you recommend. For each one, confirm it appeared in a fetched doc or KB result. If you cannot confirm it exists, either (a) WebFetch the config schema, or (b) mark it `[unverified key]`. Never present an unverified config key as a definitive fix.
+
+**Default value check**: Before recommending any parameter value, WebFetch or check KB for the framework's DEFAULT value for that parameter. If your recommended value equals the default, do NOT present it as a fix — the user already has that value. Example: `max_grad_norm=1.0` is the HuggingFace Trainer default; recommending it as a "fix" is a non-fix that wastes the user's time and erodes trust.
 6. When providing inspection/debugging code, use the actual framework APIs (e.g., `trainer.get_train_dataloader()` not a manually reconstructed DataLoader) — generic recreations won't reproduce the exact behavior
+
+**Correctness self-test**: Before finalizing, re-read each fix step and ask: "If the user copy-pastes this exactly, will it work?" Check: (a) import statements present, (b) variable names match user's code, (c) config keys verified against fetched docs, (d) no placeholder values like `<your_value>`. If any check fails, fix it before outputting.
 7. **Parameter class verification**: Before referencing any config parameter (e.g., `max_seq_length`), verify which class it belongs to (e.g., `SFTTrainer` vs `TrainingArguments`). Misattributing a parameter to the wrong class is a correctness error — the user will put it in the wrong place and it will silently do nothing.
 8. **Memory arithmetic for OOM fixes**: Always include explicit per-GPU memory math (model params + optimizer states + activations + KV cache + overhead) so the user can verify the fix will actually fit. Show the calculation, don't just assert "this will fit".
-9. **GQA/MQA head count check**: When computing KV cache size, use the number of **KV heads** (not query/attention heads). GQA models (Mistral, Llama 3, etc.) have fewer KV heads than query heads — e.g., Mistral-7B has 32 query heads but only 8 KV heads, so KV cache is 4× smaller than naive calculation. **Always verify**: `model.config.num_key_value_heads` (not `num_attention_heads`).
+
+
+**MANDATORY for any KV cache calculation**: WebFetch the model's `config.json` from HuggingFace and extract `num_key_value_heads`. Common GQA values: Mistral-7B=8, Llama-3-8B=8, Llama-3-70B=8, Qwen2.5-7B=4. Do NOT use `num_attention_heads`. If you haven't fetched config.json, you CANNOT write KV math.
 
 **Pre-output self-check (mandatory before writing the response below)**:
 1. Count your `[PageID]` or `[source](URL)` citations. If zero → you MUST use the Ungrounded format from Phase 1. Stop and rewrite.
@@ -197,6 +222,9 @@ For any parameter change, state clearly: (1) the framework default, (2) the user
 5b. Check every config key/parameter name you recommend — did it appear in a fetched doc or KB result? If not, mark `[unverified key]`.
 5. Scan all CLI commands for duplicate flags — same flag appearing twice is a correctness error.
 6. Check every fix step has a concrete value (not "try reducing X" but "set X=N").
+7. Check every recommended parameter value against the framework default — if they match, you're recommending a non-fix. Remove it or pick a different value.
+8. If you computed KV cache math, verify you used `num_key_value_heads` (not `num_attention_heads`) — GQA models differ by 4-8×.
+9. Check that every version number you cited came from a fetched source (PyPI, releases page) — not from memory.
 
 Present the result:
 
@@ -207,12 +235,17 @@ Present the result:
 **Confidence**: High / Medium / Low (no `[PageID]` → max Medium; no KB at all → must be Low)
 **Version**: [exact framework version, e.g., vLLM 0.6.0] [PageID or `[no KB]`]
 **Evidence**: [what in the logs/symptoms points to this]
+**User setup**: [echo back: model name, GPU type/count, framework + version, batch size, seq len — from user's message]
 
 ### Fix
 1. [specific action with exact config/code — include exact values, not ranges] [PageID or `[no KB]`]
 2. [verification step — how to confirm the fix worked]
 
 **Actionability rule**: Every fix step must be copy-paste-ready. "Increase X" is not a fix — "Set X=128 (was 64)" is. "Try a smaller batch size" is not a fix — "Set per_device_train_batch_size=2 with gradient_accumulation_steps=8" is. If you write a fix step that contains the word "try" or "consider" without a concrete value, rewrite it.
+
+**Before→after rule**: Every parameter change MUST show: `# was: <old_value> → now: <new_value> (reason)`. This applies in BOTH the per-step explanation AND the consolidated config block. Reviewers check actionability by counting concrete before/after pairs — implicit changes score 0.
+
+**Actionability scoring**: Reviewers count: (1) concrete numeric values in fix steps, (2) before→after pairs, (3) copy-paste-ready code blocks. Each fix step missing a concrete value costs you points. "Reduce X" = 0 points. "Set X=Y (was Z)" = 1 point. Target: every fix step scores 1.
 
 ### Consolidated Config
 ```
@@ -223,10 +256,13 @@ Present the result:
 - Alternative cause: [what else it could be] → Try: [next diagnostic step] [PageID]
 
 ### Prevention
-- [specific monitoring command with exact threshold — e.g., `assert torch.cuda.max_memory_allocated() < 0.95 * torch.cuda.get_device_properties(0).total_memory` or `if expert_util.min() < 0.05: alert()`] [PageID]
-- [runnable guard script or config flag that catches recurrence — e.g., `--log-expert-utilization --alert-threshold=0.05`] [PageID]
+- [runnable guard #1 — exact threshold, copy-pasteable] [PageID]
+- [runnable guard #2 — different failure vector] [PageID]
+- **Minimum 2 prevention items, each with a numeric threshold.** "Monitor X" without a threshold scores 0 on prevention.
 
-**Prevention quality gate**: Each prevention item must be a runnable code snippet or config flag with an exact threshold. Template: `if <metric> <op> <threshold>: <action>`. Example: `if loss_at_step_N > 1.5 * loss_at_step_(N-10): save_checkpoint_and_alert()`. "Monitor loss curves" is NOT prevention. "Add `callbacks=[EarlyStoppingCallback(patience=3)]` and `save_steps=50`" IS prevention. Each item must be copy-pasteable.
+**Serving-specific prevention**: For serving/inference fixes, MUST include: (1) a load-test command showing concurrent request handling, (2) a memory fragmentation guard (e.g., periodic `torch.cuda.empty_cache()` or `gc.collect()`), (3) a latency monitoring threshold (e.g., `assert p99 < 3 * p50`). For vLLM specifically: check chunked prefill interaction with speculative decoding, and log `gpu_cache_usage_perc` with an alert at >85%.
+
+**Prevention quality gate**: Each prevention item MUST be a runnable code snippet with an exact numeric threshold AND a citation. Template: `if <metric> <op> <threshold>: <action>  # [source](URL) or [PageID]`. Reviewers score prevention by counting: (1) runnable snippets (not prose), (2) numeric thresholds, (3) citations. All three required per item. "Monitor loss curves" = 0/3. "`if loss > 2 * rolling_mean: save_checkpoint()` [PageID]" = 3/3. Each item must be copy-pasteable and grounded.
 
 **Prevention examples by failure type** (use these as templates):
 - OOM: `assert torch.cuda.max_memory_allocated() / torch.cuda.get_device_properties(0).total_memory < 0.90, "Memory usage >90%"`
@@ -256,14 +292,15 @@ Present the result:
 | Using framework-specific config keys without version check | Config keys change across versions; wrong key silently does nothing | Verify config keys against your installed version. Pin the version in your fix. |
 | Claiming quadratic memory scaling without checking for flash attention | Vanilla attention is O(n²) in sequence length, but flash attention (default in Llama 3+, Mistral, etc.) changes this | Always check whether the model uses flash attention before citing quadratic memory scaling. State the assumption explicitly. |
 | Recommending quantization without checking hardware support | FP8 needs SM89+ (H100), AWQ/GPTQ need specific kernel support, not all formats work on all GPUs | Before recommending a quantization format, verify the target GPU supports it. FP8 → H100+, not A100. State the hardware requirement explicitly and lead with a compatible option. |
-| **Presenting general knowledge as KB-grounded analysis** | KB call failed, model says "I have deep expertise" and writes from memory | BANNED opening patterns: "KB tools hit an issue, but I have deep expertise", "Let me give you the full analysis directly", "I know X well", "I'm very familiar with X". If you catch yourself writing ANY of these, STOP — delete the text, call WebFetch on 2 URLs from the URL registry, then restart your response with `> Grounding: Web mode`. This is the single most common failure mode in testing. |
-| **Writing a normal-format response when KB is down** | KB call failed but response uses standard format without citations — looks authoritative but is fabrication | Zero `[PageID]` + zero `[source](URL)` + zero `[no KB]` = automatic failure. Use Ungrounded format or web-mode template. No exceptions. |
+| **Presenting general knowledge as KB-grounded analysis** | KB call failed, model says "I have deep expertise" and writes from memory | BANNED patterns (instant 0 score): "I have deep knowledge", "Let me give you the full analysis directly", "I know X well", "I'm very familiar with X", "KB is unavailable but". This remains the #1 failure mode — t_agent2 used "I have deep knowledge of vLLM internals" and scored 1/3 correctness. STOP → WebFetch 2 URLs → restart with `> Grounding: Web mode`. |
+
 | **Skipping prevention or writing generic prevention** | Prevention section says "monitor loss" or "use checkpoints" — advice so generic it adds zero value | Prevention must cite a specific tool, metric threshold, or config flag that would have caught this failure earlier. E.g., "add `--log-expert-utilization` every 50 steps; if any expert drops below 5%, trigger alert" — not "monitor expert utilization". |
 | **Verification script that doesn't match the failure mode** | Serving fix verified with single curl; OOM fix verified with "run and see if it crashes" | Match verification to the failure: serving → concurrent load test with latency percentiles; OOM → memory profiling with `torch.cuda.max_memory_allocated()`; convergence → loss curve over N steps with expected trajectory. |
 | **Using total attention heads for KV cache math in GQA models** | Mistral/Llama use GQA with fewer KV heads than query heads — using `num_attention_heads` overcounts KV cache by 2-8× | Always use `num_key_value_heads` from model config. Mistral-7B: 8 KV heads, not 32. Llama-3-8B: 8 KV heads, not 32. |
 | **Fix steps without concrete values** | "Try a lower learning rate" or "reduce batch size" without saying to what | Every fix step needs an exact value with reasoning: "Set lr=1e-5 (was 3e-4, ~30× reduction to let aux loss compete with LM loss gradient)". Ranges are acceptable only with a recommended starting point. |
-| **Citing speedup percentages without a source** | "AWQ gives 2× speedup" or "speculative decoding 3-4× faster" without any citation | Every quantitative performance claim (X% faster, Y× throughput) MUST have a `[PageID]` or `[source](URL)` — or be tagged `[no KB]`. Unsourced speedup numbers are fabrication, not analysis. |
-| **Contradictory parameter framing** | Calling a value "too high" then recommending raising it further, or calling it "too weak" then lowering it | Pick ONE direction. If the value is above default but the effective signal is weak due to competing gradients, say "despite being above default, the signal is too weak because..." — never call a value "too high" if your fix is to increase it. |
+
+| **Recommending framework defaults as fixes** | "Set max_grad_norm=1.0" when that's already the default | Before recommending ANY parameter value, verify the framework default. If your recommendation equals the default, it's a non-fix. WebFetch the framework's TrainingArguments or config docs to confirm defaults before writing fix steps. |
+
 
 ## Examples
 
