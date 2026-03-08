@@ -30,7 +30,7 @@ See [TESTED_TASKS.md](TESTED_TASKS.md) for the full list of tasks and scores.
 
 ## Prerequisites
 
-### API Key (optional, recommended)
+### API Key (optional, highly recommended)
 
 The plugin works without an API key — skills use web search to ground answers. With a key, your agent gets access to the Leeroopedia knowledge base (27k+ pages, faster and more precise lookups). The plugin will tell you if it's running without a key.
 
