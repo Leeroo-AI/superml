@@ -1,8 +1,8 @@
 # SuperML
 
-An ML engineering plugin for AI coding agents.
+Give your AI coding agent ML engineering superpowers.
 
-It adds two things your agent doesn't have out of the box:
+It adds two things your coding agent doesn't have:
 
 **Process** — seven skills that cover how ML work actually gets done. Plan the run, verify the config, debug the failure, iterate on results, track experiments across sessions. Basically the same steps you'd follow yourself, just encoded so your agent follows them too.
 
