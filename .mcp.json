@@ -1,13 +1,8 @@
 {
   "mcpServers": {
     "leeroopedia": {
-      "command": "uvx",
-      "args": [
-        "leeroopedia-mcp"
-      ],
-      "env": {
-        "LEEROOPEDIA_API_KEY": "${LEEROOPEDIA_API_KEY}"
-      }
+      "type": "http",
+      "url": "https://mcp.leeroopedia.com/mcp?token=${LEEROOPEDIA_API_KEY}"
     }
   }
 }

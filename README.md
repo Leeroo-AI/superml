@@ -30,28 +30,17 @@ See [TESTED_TASKS.md](TESTED_TASKS.md) for the full list of tasks and scores.
 
 ## Prerequisites
 
-### 1. Get an API Key (optional, highly recommended)
+### API Key (optional, recommended)
 
-The plugin works without an API key — skills use web search to ground answers in official docs. With a key, your agent gets access to the Leeroopedia knowledge base (27k+ pages, faster and more precise lookups).
+The plugin works without an API key — skills use web search to ground answers. With a key, your agent gets access to the Leeroopedia knowledge base (27k+ pages, faster and more precise lookups). The plugin will tell you if it's running without a key.
 
-To get a key: head to [app.leeroopedia.com](https://app.leeroopedia.com/dashboard), grab one from the API key dashboard.
-
-- Keys look like `kpsk_...`
-- **$20 free credit** on signup, no credit card needed
-
-### 2. Set the Environment Variable (if you have a key)
+To get a key: [app.leeroopedia.com](https://app.leeroopedia.com/dashboard) — $20 free credit on signup, no credit card.
 
 ```bash
 export LEEROOPEDIA_API_KEY=kpsk_your_key_here
 ```
 
-Add it to your shell profile (`~/.bashrc`, `~/.zshrc`, `~/.config/fish/config.fish`) so it sticks.
-
-### 3. Install uv (if you don't have it)
-
-```bash
-curl -LsSf https://astral.sh/uv/install.sh | sh
-```
+Add to your shell profile (`~/.bashrc`, `~/.zshrc`) so it persists.
 
 ## Installation
 
