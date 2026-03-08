@@ -12,18 +12,18 @@ Works with Claude Code, Cursor, Codex, OpenCode, and Gemini CLI.
 
 ## How It Works
 
-1. **A session hook** kicks in automatically — no manual setup per conversation.
-2. **Skills** walk your agent through ML workflows — before launching a training run, it checks the config; when something breaks, it debugs by root cause; after results, it logs what worked.
-3. **MCP tools** connect to the Leeroopedia knowledge base — your agent looks things up and cites real framework docs.
-4. **A persistent ML agent** (`ml-expert`) picks up heavier tasks and keeps track of your hardware, experiments, and lessons learned across sessions.
+1. **A session hook** loads automatically — zero setup per conversation.
+2. **Skills** guide the ML workflow — verify before launch, debug by root cause, iterate on results, track what worked.
+3. **MCP tools** connect to the Leeroopedia knowledge base — your agent looks things up and cites real docs instead of guessing.
+4. **A persistent ML agent** (`ml-expert`) handles deeper tasks and remembers your hardware, experiments, and lessons across sessions.
 
 ## Prerequisites
 
-### 1. Get an API Key (optional, recommended)
+### 1. Get an API Key (optional, highly recommended)
 
 The plugin works without an API key — skills use web search to ground answers in official docs. With a key, your agent gets access to the Leeroopedia knowledge base (27k+ pages, faster and more precise lookups).
 
-To get a key: head to [app.leeroopedia.com](https://app.leeroopedia.com/dashboard), grab one from the dashboard.
+To get a key: head to [app.leeroopedia.com](https://app.leeroopedia.com/dashboard), grab one from the API key dashboard.
 
 - Keys look like `kpsk_...`
 - **$20 free credit** on signup, no credit card needed
