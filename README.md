@@ -1,6 +1,18 @@
 # SuperML
 
-Give your AI coding agent ML engineering superpowers.
+<p align="center">
+  <strong>Give your AI coding agent ML engineering superpowers.</strong>
+</p>
+
+<p align="center">
+  <a href="https://leeroopedia.com"><img src="https://img.shields.io/badge/knowledge%20base-leeroopedia.com-green" alt="Leeroopedia"></a>
+  <a href="https://github.com/leeroo-ai/superml/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-Apache--2.0-blue" alt="License"></a>
+  <a href="https://discord.gg/hqVbPNNEZM"><img src="https://dcbadge.limes.pink/api/server/hqVbPNNEZM?style=flat" alt="Discord"></a>
+  <a href="https://github.com/leeroo-ai/superml"><img src="https://img.shields.io/github/commit-activity/m/leeroo-ai/superml" alt="GitHub commit activity"></a>
+  <a href="https://www.ycombinator.com/companies/leeroo"><img src="https://img.shields.io/badge/Y%20Combinator-X25-orange?logo=ycombinator&logoColor=white" alt="Y Combinator X25"></a>
+</p>
+
+---
 
 It adds two things your coding agent doesn't have:
 
@@ -140,11 +152,17 @@ Eight tools that talk to the Leeroopedia knowledge base:
 | `query_hyperparameter_priors` | Recommended parameter ranges for your specific setup |
 | `get_page` | Pull up the full page behind a `[PageID]` citation |
 
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for how to report bugs, suggest improvements, and submit PRs.
+
 ## Links
 
 - [Leeroopedia](https://leeroopedia.com) — the ML/AI knowledge base behind the memory
 - [leeroopedia-mcp](https://github.com/leeroo-ai/leeroopedia-mcp) — MCP server repo
+- [Discord](https://discord.gg/hqVbPNNEZM) — community chat
+- [Leeroo](https://leeroo.com) — the team behind SuperML
 
 ## License
 
-Apache-2.0
+[Apache-2.0](LICENSE)
