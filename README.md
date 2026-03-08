@@ -4,9 +4,9 @@ Give your AI coding agent ML engineering superpowers.
 
 It adds two things your coding agent doesn't have:
 
-**Process** — seven skills that cover how ML work actually gets done. Plan the run, verify the config, debug the failure, iterate on results, track experiments across sessions. Basically the same steps you'd follow yourself, just encoded so your agent follows them too.
+**ML Pipelines**: Seven skills that encode the workflow you already follow. Plan the architecture against real framework docs. Catch config mistakes and bad math before they cost you GPU hours. Debug training failures like OOM, NaN, and divergence by root cause, not by guessing. Get ranked next steps when metrics plateau. And an agentic experiment memory that carries hypotheses, results, and hard-won lessons across sessions — your agent stops repeating failed experiments and starts compounding what works.
 
-**Memory** — powered by [Leeroopedia](https://leeroopedia.com), 27k+ pages of best practices and hard-won lessons from 1000+ ML/AI frameworks. When your agent recommends a config or a fix, it can point to where it learned it.
+**Memory** — Backed by [Leeroopedia](https://leeroopedia.com), a knowledge base of 27k+ pages across 1000+ ML/AI frameworks. Config references, debugging heuristics, implementation patterns, and battle-tested defaults from vLLM to DeepSpeed to LangChain. Built by the Leeroo Continuous Learning System over thousands of hours of ingesting top-tier ML resources, structured as a browsable wiki, and continuously updated by AI and human engineers. When your agent recommends a config, it points to the page it learned it from — not a vague "best practice."
 
 Works with Claude Code, Cursor, Codex, OpenCode, and Gemini CLI.
 
