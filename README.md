@@ -17,6 +17,17 @@ Works with Claude Code, Cursor, Codex, OpenCode, and Gemini CLI.
 3. **MCP tools** connect to the Leeroopedia knowledge base — your agent looks things up and cites real docs instead of guessing.
 4. **A persistent ML agent** (`ml-expert`) handles deeper tasks and remembers your hardware, experiments, and lessons across sessions.
 
+## Results
+
+We gave 38 ML tasks to Claude Code — once with SuperML, once without — and had an independent LLM judge rate both. Each response is scored out of 15 across correctness, specificity, mistake prevention, actionability, and grounding. Tasks cover QLoRA fine-tuning, distributed training, LLM inference optimization, alignment (DPO/GRPO), RAG pipelines, model merging, quantization, and more.
+
+| | With SuperML | Without |
+|--|--------|----------|
+| ML task average | **13.2 / 15** | 8.3 / 15 |
+| ML task win rate | **91%** | 9% |
+
+See [TESTED_TASKS.md](TESTED_TASKS.md) for the full list of tasks and scores.
+
 ## Prerequisites
 
 ### 1. Get an API Key (optional, highly recommended)
