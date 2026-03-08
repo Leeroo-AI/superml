@@ -4,17 +4,17 @@ Give your AI coding agent ML engineering superpowers.
 
 It adds two things your coding agent doesn't have:
 
-**ML Pipeline** — Seven skills that encode the workflow you already follow. Plan against real framework docs. Catch config mistakes before they cost you GPU hours. Debug OOM, NaN, and divergence by root cause, not by guessing. Get ranked next steps when metrics plateau. An agentic experiment memory carries hypotheses, results, and lessons across sessions — your agent stops repeating failed experiments and starts compounding what works.
+**ML Pipeline**: Seven skills that encode the workflow you already follow. Plan against real framework docs. Catch config mistakes before they cost you GPU hours. Debug OOM, NaN, and divergence by root cause, not by guessing. Get ranked next steps when metrics plateau. An agentic experiment memory carries hypotheses, results, and lessons across sessions — your agent stops repeating failed experiments and starts compounding what works.
 
-**Memory** — Backed by [Leeroopedia](https://leeroopedia.com), 27k+ pages across 1000+ ML/AI frameworks. Config references, debugging heuristics, implementation patterns, and battle-tested defaults from vLLM to DeepSpeed to LangChain. Built by the [Leeroo](https://leeroo.com) continuous learning system, structured as a browsable wiki, and continuously updated by AI and human engineers. When your agent recommends a config, it points to the page it learned it from.
+**Memory**: Backed by [Leeroopedia](https://leeroopedia.com), 27k+ pages across 1000+ ML/AI frameworks. Config references, debugging heuristics, implementation patterns, and battle-tested defaults from vLLM to DeepSpeed to LangChain. Built by the [Leeroo](https://leeroo.com) continuous learning system, structured as a browsable wiki, and continuously updated by AI and human engineers. When your agent recommends a config, it points to the page it learned it from.
 
 Works with Claude Code, Cursor, Codex, OpenCode, and Gemini CLI.
 
 ## How It Works
 
-1. **A session hook** loads automatically — zero setup per conversation.
-2. **Skills** guide the ML workflow — verify before launch, debug by root cause, iterate on results, track what worked.
-3. **MCP tools** connect to the Leeroopedia knowledge base — your agent looks things up and cites real docs instead of guessing.
+1. **A session hook** loads automatically, zero setup per conversation.
+2. **Skills** guide the ML workflow, verify before launch, debug by root cause, iterate on results, track what worked.
+3. **MCP tools** connect to the Leeroopedia knowledge base, your agent looks things up and cites real docs instead of guessing.
 4. **A persistent ML agent** (`ml-expert`) handles deeper tasks and remembers your hardware, experiments, and lessons across sessions.
 
 ## Results
