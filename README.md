@@ -4,9 +4,9 @@ Give your AI coding agent ML engineering superpowers.
 
 It adds two things your coding agent doesn't have:
 
-**ML Pipelines**: Seven skills that encode the workflow you already follow. Plan the architecture against real framework docs. Catch config mistakes and bad math before they cost you GPU hours. Debug training failures like OOM, NaN, and divergence by root cause, not by guessing. Get ranked next steps when metrics plateau. And an agentic experiment memory that carries hypotheses, results, and hard-won lessons across sessions — your agent stops repeating failed experiments and starts compounding what works.
+**ML Pipeline** — Seven skills that encode the workflow you already follow. Plan against real framework docs. Catch config mistakes before they cost you GPU hours. Debug OOM, NaN, and divergence by root cause, not by guessing. Get ranked next steps when metrics plateau. An agentic experiment memory carries hypotheses, results, and lessons across sessions — your agent stops repeating failed experiments and starts compounding what works.
 
-**Memory** — Backed by [Leeroopedia](https://leeroopedia.com), a knowledge base of 27k+ pages across 1000+ ML/AI frameworks. Config references, debugging heuristics, implementation patterns, and battle-tested defaults from vLLM to DeepSpeed to LangChain. Built by the Leeroo Continuous Learning System over thousands of hours of ingesting top-tier ML resources, structured as a browsable wiki, and continuously updated by AI and human engineers. When your agent recommends a config, it points to the page it learned it from — not a vague "best practice."
+**Memory** — Backed by [Leeroopedia](https://leeroopedia.com), 27k+ pages across 1000+ ML/AI frameworks. Config references, debugging heuristics, implementation patterns, and battle-tested defaults from vLLM to DeepSpeed to LangChain. Built by the [Leeroo](https://leeroo.com) continuous learning system, structured as a browsable wiki, and continuously updated by AI and human engineers. When your agent recommends a config, it points to the page it learned it from.
 
 Works with Claude Code, Cursor, Codex, OpenCode, and Gemini CLI.
 
