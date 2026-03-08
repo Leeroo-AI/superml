@@ -57,15 +57,17 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
 
 ### Claude Code
 
-```bash
-claude plugin add --from-github leeroo-ai/superml
+Register the marketplace, then install the plugin:
+
+```
+/plugin marketplace add leeroo-ai/leeroo-marketplace
+/plugin install superml@leeroo-marketplace
 ```
 
-Or install manually:
+Or install directly from GitHub:
 
 ```bash
-git clone https://github.com/leeroo-ai/superml.git
-claude plugin add ./superml
+claude plugin add --from-github leeroo-ai/superml
 ```
 
 ### Cursor
