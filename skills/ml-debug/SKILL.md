@@ -188,7 +188,7 @@ For any parameter change, state clearly: (1) the framework default, (2) the user
 ### Phase 3: Fix + Verify
 
 1. Apply the fix — provide specific config changes, code patches, or commands
-2. Include a **runnable verification script** — not just prose instructions. For training: a code block that runs N steps and prints the metric to check. For serving: an async load-test script that measures p50/p95/p99 under concurrent load (not just a single curl). For OOM: include `torch.cuda.max_memory_allocated()` check. Single-request latency checks are insufficient for serving fixes. The script must test the SPECIFIC failure that was diagnosed — not a generic health check.
+2. Include a **runnable verification script** — not just prose instructions. For training: a code block that runs N steps and prints the metric to check. For serving: an async load-test script using `asyncio.gather()` with N concurrent requests matching the user's stated concurrency — sequential loops do NOT test concurrency. Measure and print p50/p95/p99. For OOM: include `torch.cuda.max_memory_allocated()` check. Single-request latency checks are insufficient for serving fixes. The script must test the SPECIFIC failure that was diagnosed — not a generic health check.
 3. **Correctness gate**: Before presenting any fix, verify every API call, import, and config key against KB results or fetched docs. In web mode, WebFetch the framework's API reference for any function you're about to recommend. Wrong API calls (e.g., nonexistent methods, deprecated parameters) are worse than no fix. Every config value must include the exact key path (e.g., `engine_args.gpu_memory_utilization`, not just "gpu_memory_utilization").
 
 **Unverified flag protocol**: If you cannot verify a CLI flag or config key exists in fetched docs, you MUST: (1) mark it `[unverified flag]` inline, (2) provide a fallback command using only verified flags, (3) include a one-liner to test the flag: `<tool> --help | grep <flag>`. Never present an unverified flag as the primary recommendation — always lead with verified alternatives.
@@ -221,6 +221,7 @@ For any parameter change, state clearly: (1) the framework default, (2) the user
 5a. Check every quantitative claim ("X× faster", "Y% improvement") has a citation or `[no KB]` tag.
 5b. Check every config key/parameter name you recommend — did it appear in a fetched doc or KB result? If not, mark `[unverified key]`.
 5. Scan all CLI commands for duplicate flags — same flag appearing twice is a correctness error.
+5a. **Consolidation check**: If your response contains multiple config/launch blocks (e.g., "Phase 1" and "Phase 2"), verify they don't set the SAME flag to DIFFERENT values. Merge into ONE final launch command in the Consolidated Config section. Duplicate or contradictory flags across blocks is the #1 serving-fix correctness error.
 6. Check every fix step has a concrete value (not "try reducing X" but "set X=N").
 7. Check every recommended parameter value against the framework default — if they match, you're recommending a non-fix. Remove it or pick a different value.
 8. If you computed KV cache math, verify you used `num_key_value_heads` (not `num_attention_heads`) — GQA models differ by 4-8×.
@@ -300,6 +301,26 @@ Present the result:
 | **Fix steps without concrete values** | "Try a lower learning rate" or "reduce batch size" without saying to what | Every fix step needs an exact value with reasoning: "Set lr=1e-5 (was 3e-4, ~30× reduction to let aux loss compete with LM loss gradient)". Ranges are acceptable only with a recommended starting point. |
 
 | **Recommending framework defaults as fixes** | "Set max_grad_norm=1.0" when that's already the default | Before recommending ANY parameter value, verify the framework default. If your recommendation equals the default, it's a non-fix. WebFetch the framework's TrainingArguments or config docs to confirm defaults before writing fix steps. |
+| **Using version-specific CLI flag syntax without verification** | vLLM `--speculative-config '{JSON}'` only works in recent versions; older versions use `--speculative-model` + `--num-speculative-tokens` as separate flags | WebFetch the framework's CLI arg parser or `--help` output for the user's installed version. When multiple flag syntaxes exist across versions, show BOTH the modern and legacy forms with version cutoffs: "vLLM ≥0.6.2: `--speculative-config`; vLLM <0.6.2: `--speculative-model` + `--num-speculative-tokens`". |
+| **Verifying serving fixes with synchronous requests** | Script sends requests one at a time, so it tests single-user latency, not the concurrent load that triggered the problem | Serving verification MUST use `asyncio.gather()` or equivalent to send N concurrent requests matching the user's stated concurrency (e.g., 50 users → 50 concurrent requests). Measure p50/p95/p99 across the batch. A sequential loop that hits the endpoint 50 times in series will show ~1/50th of the real tail latency. |
+| **Setting `max-num-seqs` higher than actual concurrency for latency optimization** | Higher `max-num-seqs` means more requests batched together, which INCREASES p99 latency per request due to longer decode iterations | For latency-sensitive serving, set `max-num-seqs` ≤ 2× actual concurrent users (e.g., 50 users → `--max-num-seqs 64-100`, NOT 256). Higher values optimize throughput at the cost of tail latency. State the tradeoff explicitly. |
+
+**Serving benchmark template** (adapt to user's concurrency and endpoint):
+```python
+import asyncio, aiohttp, time, numpy as np
+async def bench(url, n=50, payload={"prompt": "Hello", "max_tokens": 128}):
+    async with aiohttp.ClientSession() as s:
+        async def req():
+            t0 = time.perf_counter()
+            async with s.post(url, json=payload) as r: await r.read()
+            return time.perf_counter() - t0
+        lats = await asyncio.gather(*[req() for _ in range(n)])
+    lats_ms = np.array(lats) * 1000
+    print(f"p50={np.percentile(lats_ms,50):.0f}ms p95={np.percentile(lats_ms,95):.0f}ms p99={np.percentile(lats_ms,99):.0f}ms")
+    assert np.percentile(lats_ms, 99) < 3000, "p99 > 3s SLA breach"
+asyncio.run(bench("http://localhost:8000/v1/completions"))
+```
+Include this template (with user's actual concurrency level and SLA) in EVERY serving fix response. Adjust `n` to match the user's stated concurrent users.
 
 
 ## Examples
