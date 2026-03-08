@@ -11,6 +11,7 @@
   "repository": "https://github.com/leeroo-ai/superml",
   "license": "Apache-2.0",
   "keywords": ["ml", "ai", "fine-tuning", "inference", "rag", "agents", "mcp"],
+  "logo": "./assets/logo.png",
   "skills": "./skills/",
   "agents": "./agents/",
   "hooks": "./hooks/hooks.json",

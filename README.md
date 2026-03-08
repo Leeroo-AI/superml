@@ -1,6 +1,10 @@
 # SuperML
 
 <p align="center">
+  <img src="assets/logo.png" alt="SuperML logo" height="120" />
+</p>
+
+<p align="center">
   <strong>Give your AI coding agent ML engineering superpowers.</strong>
 </p>
 
