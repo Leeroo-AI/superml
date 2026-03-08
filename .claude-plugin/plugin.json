@@ -1,13 +1,13 @@
 {
   "name": "superml",
-  "description": "ML/AI knowledge base plugin: grounded answers from 27,667 pages across 1000+ frameworks",
+  "description": "ML engineering plugin: Give your AI coding agent ML engineering superpowers.",
   "version": "1.0.0",
   "author": {
-    "name": "Leeroo AI",
-    "email": "hello@leeroopedia.com"
+    "name": "Leeroo Dev Team",
+    "email": "support@leeroo.com"
   },
-  "homepage": "https://leeroopedia.com",
+  "homepage": "https://leeroo.com",
   "repository": "https://github.com/leeroo-ai/superml",
   "license": "Apache-2.0",
-  "keywords": ["ml", "ai", "knowledge-base", "fine-tuning", "inference", "rag", "agents", "mcp"]
+  "keywords": ["ml", "ai", "fine-tuning", "inference", "rag", "agents", "mcp"]
 }

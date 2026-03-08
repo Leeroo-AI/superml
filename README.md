@@ -72,9 +72,16 @@ claude plugin add --from-github leeroo-ai/superml
 
 ### Cursor
 
+In Cursor Agent chat:
+
+```
+/add-plugin superml
+```
+
+Or clone into your project — Cursor auto-detects `.cursor-plugin/plugin.json`:
+
 ```bash
 git clone https://github.com/leeroo-ai/superml.git
-# Cursor auto-detects .cursor-plugin/plugin.json
 ```
 
 ### Codex
@@ -94,11 +101,7 @@ gemini extension add ./superml/gemini-extension.json
 
 ### Alternative: Remote MCP (no local install)
 
-If you just want the knowledge base without the full plugin:
-
-```bash
-claude mcp add --transport http leeroopedia "https://mcp.leeroopedia.com/mcp?token=YOUR_KEY"
-```
+If you just want the knowledge base without the full plugin, see [leeroopedia-mcp](https://github.com/Leeroo-AI/leeroopedia-mcp) for setup instructions.
 
 You get the MCP tools (memory) but not the workflow skills (process).
 

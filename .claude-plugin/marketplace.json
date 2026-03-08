@@ -1,14 +1,14 @@
 {
   "name": "superml",
-  "description": "ML/AI knowledge base plugin for Claude Code",
+  "description": "ML engineering plugin for Claude Code",
   "owner": {
-    "name": "Leeroo AI",
-    "email": "hello@leeroopedia.com"
+    "name": "Leeroo Dev Team",
+    "email": "support@leeroo.com"
   },
   "plugins": [
     {
       "name": "superml",
-      "description": "ML/AI knowledge base plugin: grounded answers from 27,667 pages across 1000+ frameworks",
+      "description": "ML engineering plugin: Give your AI coding agent ML engineering superpowers.",
       "version": "1.0.0",
       "source": "./"
     }
