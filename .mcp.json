@@ -2,7 +2,7 @@
   "mcpServers": {
     "leeroopedia": {
       "type": "http",
-      "url": "https://mcp.leeroopedia.com/mcp?token=${LEEROOPEDIA_API_KEY}"
+      "url": "https://mcp.leeroopedia.com/mcp?token=${LEEROOPEDIA_API_KEY:-}"
     }
   }
 }
