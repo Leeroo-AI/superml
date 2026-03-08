@@ -2,11 +2,17 @@
 
 ## Prerequisites
 
-1. Get your API key at [app.leeroopedia.com](https://app.leeroopedia.com)
-2. Set the environment variable:
-   ```bash
-   export LEEROOPEDIA_API_KEY=kpsk_your_key_here
-   ```
+### API Key (optional, recommended)
+
+The plugin works without an API key — skills use web search to ground answers. With a key, your agent gets access to the Leeroopedia knowledge base (27k+ pages, faster and more precise lookups). The plugin will tell you if it's running without a key.
+
+To get a key: [app.leeroopedia.com](https://app.leeroopedia.com/dashboard) — $20 free credit on signup, no credit card.
+
+```bash
+export LEEROOPEDIA_API_KEY=kpsk_your_key_here
+```
+
+Add to your shell profile (`~/.bashrc`, `~/.zshrc`) so it persists.
 
 ## Installation
 
@@ -21,23 +27,14 @@
    ln -sf "$(pwd)/superml/skills" ~/.agents/skills/superml
    ```
 
-3. Configure the MCP server. Add to your Codex MCP config:
-   ```json
-   {
-     "mcpServers": {
-       "leeroopedia": {
-         "command": "uvx",
-         "args": ["leeroopedia-mcp"],
-         "env": { "LEEROOPEDIA_API_KEY": "${LEEROOPEDIA_API_KEY}" }
-       }
-     }
-   }
-   ```
+3. Install [uv](https://docs.astral.sh/uv/getting-started/installation/) (Python package runner), then configure the MCP server. Add to `~/.codex/config.toml`:
+   ```toml
+   [mcp_servers.leeroopedia]
+   command = "uvx"
+   args = ["leeroopedia-mcp"]
 
-   Or use the remote URL (no Python required):
-   ```bash
-   # Replace YOUR_KEY with your kpsk_... key
-   codex mcp add --transport http leeroopedia "https://mcp.leeroopedia.com/mcp?token=YOUR_KEY"
+   [mcp_servers.leeroopedia.env]
+   LEEROOPEDIA_API_KEY = "kpsk_your_key_here"
    ```
 
 4. Restart Codex.

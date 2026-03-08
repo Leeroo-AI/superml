@@ -2,11 +2,17 @@
 
 ## Prerequisites
 
-1. Get your API key at [app.leeroopedia.com](https://app.leeroopedia.com)
-2. Set the environment variable:
-   ```bash
-   export LEEROOPEDIA_API_KEY=kpsk_your_key_here
-   ```
+### API Key (optional, recommended)
+
+The plugin works without an API key — skills use web search to ground answers. With a key, your agent gets access to the Leeroopedia knowledge base (27k+ pages, faster and more precise lookups). The plugin will tell you if it's running without a key.
+
+To get a key: [app.leeroopedia.com](https://app.leeroopedia.com/dashboard) — $20 free credit on signup, no credit card.
+
+```bash
+export LEEROOPEDIA_API_KEY=kpsk_your_key_here
+```
+
+Add to your shell profile (`~/.bashrc`, `~/.zshrc`) so it persists.
 
 ## Installation
 
@@ -29,14 +35,16 @@
    ln -sf "$PLUGIN_DIR/skills" "$OPENCODE_DIR/skills/superml"
    ```
 
-3. Configure MCP. Add to your OpenCode config:
+3. Install [uv](https://docs.astral.sh/uv/getting-started/installation/) (Python package runner), then configure MCP. Add to your `opencode.json`:
    ```json
    {
-     "mcpServers": {
+     "mcp": {
        "leeroopedia": {
-         "command": "uvx",
-         "args": ["leeroopedia-mcp"],
-         "env": { "LEEROOPEDIA_API_KEY": "${LEEROOPEDIA_API_KEY}" }
+         "type": "local",
+         "command": ["uvx", "leeroopedia-mcp"],
+         "environment": {
+           "LEEROOPEDIA_API_KEY": "kpsk_your_key_here"
+         }
        }
      }
    }
