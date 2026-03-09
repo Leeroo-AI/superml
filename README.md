@@ -135,22 +135,7 @@ If it's working, your agent will ground its answer in documentation (KB citation
 
 ### Agent
 
-**ml-expert** — a persistent ML engineer agent for the bigger stuff: pipeline reviews, deep analysis, framework deep-dives. It remembers your hardware setup, past experiments, and lessons learned across sessions.
-
-### MCP Tools
-
-Eight tools that talk to the Leeroopedia knowledge base:
-
-| Tool | What it does |
-|------|-------------|
-| `search_knowledge` | Look up best practices, configs, framework details |
-| `build_plan` | Get a KB-grounded implementation plan |
-| `review_plan` | Spot risks and gaps in an existing plan |
-| `verify_code_math` | Check code or config against documented behavior |
-| `diagnose_failure` | Match errors against known framework failure patterns |
-| `propose_hypothesis` | Ranked alternatives when you're stuck |
-| `query_hyperparameter_priors` | Recommended parameter ranges for your specific setup |
-| `get_page` | Pull up the full page behind a `[PageID]` citation |
+[ml-expert](agents/ml-expert.md): a persistent ML engineer agent for the bigger stuff: pipeline reviews, deep analysis, framework deep-dives. It remembers your hardware setup, past experiments, and lessons learned across sessions.
 
 ## Contributing
 
@@ -158,10 +143,9 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for how to report bugs, suggest improveme
 
 ## Links
 
-- [Leeroopedia](https://leeroopedia.com) — the ML/AI knowledge base behind the memory
-- [leeroopedia-mcp](https://github.com/leeroo-ai/leeroopedia-mcp) — MCP server repo
-- [Discord](https://discord.gg/hqVbPNNEZM) — community chat
-- [Leeroo](https://leeroo.com) — the team behind SuperML
+- [Leeroopedia](https://leeroopedia.com): the ML/AI knowledge base behind the memory
+- [leeroopedia-mcp](https://github.com/leeroo-ai/leeroopedia-mcp): MCP server repo
+- [Leeroo](https://leeroo.com): the team behind SuperML
 
 ## License
 
