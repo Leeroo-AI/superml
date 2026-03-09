@@ -137,6 +137,12 @@ If it's working, your agent will ground its answer in documentation (KB citation
 
 [ml-expert](agents/ml-expert.md): a persistent ML engineer agent for the bigger stuff: pipeline reviews, deep analysis, framework deep-dives. It remembers your hardware setup, past experiments, and lessons learned across sessions.
 
+## Enterprise
+
+SuperML covers ML model development today. We're expanding to production ML use cases on our enterprise platform: forecasting & planning, fraud & anomaly detection, customer analytics, recommendation systems, document intelligence, and customer service automation.
+
+[Request enterprise access](https://novel-platform.leeroo.com/auth)
+
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for how to report bugs, suggest improvements, and submit PRs.
