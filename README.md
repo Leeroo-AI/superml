@@ -139,9 +139,9 @@ If it's working, your agent will ground its answer in documentation (KB citation
 
 ## Enterprise
 
-SuperML is integrated in our enterprise platform, covering forecasting & planning, fraud & anomaly detection, customer analytics, recommendation systems, document intelligence, and customer service automation.
-
-[Request enterprise access](https://novel-platform.leeroo.com/auth)
+> **SuperML is integrated in our enterprise platform** — forecasting & planning, fraud & anomaly detection, customer analytics, recommendation systems, document intelligence, and customer service automation.
+>
+> [**Request enterprise access →**](https://novel-platform.leeroo.com/auth)
 
 ## Contributing
 
