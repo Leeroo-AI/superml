@@ -73,7 +73,7 @@ claude plugin add --from-github leeroo-ai/superml
 
 ### Cursor
 
-In Cursor Agent chat:
+In Cursor Agent chat (waiting for Cursor team approval):
 
 ```
 /add-plugin superml
