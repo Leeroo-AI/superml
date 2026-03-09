@@ -139,7 +139,7 @@ If it's working, your agent will ground its answer in documentation (KB citation
 
 ## Enterprise
 
-SuperML covers ML model development today. We're expanding to production ML use cases on our enterprise platform: forecasting & planning, fraud & anomaly detection, customer analytics, recommendation systems, document intelligence, and customer service automation.
+SuperML is integrated in our enterprise platform, covering forecasting & planning, fraud & anomaly detection, customer analytics, recommendation systems, document intelligence, and customer service automation.
 
 [Request enterprise access](https://novel-platform.leeroo.com/auth)
 
