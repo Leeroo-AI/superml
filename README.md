@@ -12,6 +12,12 @@
   <a href="https://www.ycombinator.com/companies/leeroo"><img src="https://img.shields.io/badge/Y%20Combinator-X25-orange?logo=ycombinator&logoColor=white" alt="Y Combinator X25"></a>
 </p>
 
+<p align="center">
+  <a href="https://www.youtube.com/watch?v=cAK8NK2bJ-0">
+    <img src="https://img.youtube.com/vi/cAK8NK2bJ-0/maxresdefault.jpg" alt="SuperML Demo Video" width="700">
+  </a>
+</p>
+
 ---
 
 It adds two things your coding agent doesn't have:
