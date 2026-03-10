@@ -13,6 +13,9 @@
 </p>
 
 <p align="center">
+  <em>Watch how SuperML works in 90 seconds:</em>
+</p>
+<p align="center">
   <a href="https://www.youtube.com/watch?v=cAK8NK2bJ-0">
     <img src="https://img.youtube.com/vi/cAK8NK2bJ-0/maxresdefault.jpg" alt="SuperML Demo Video" width="700">
   </a>
