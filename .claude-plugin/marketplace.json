@@ -9,7 +9,7 @@
     {
       "name": "superml",
       "description": "ML engineering plugin: Give your AI coding agent ML engineering superpowers.",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "source": "./"
     }
   ]
