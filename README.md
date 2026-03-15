@@ -152,6 +152,8 @@ If it's working, your agent will ground its answer in documentation (KB citation
 >
 > [**Request enterprise access →**](https://novel-platform.leeroo.com/auth)
 
+If SuperML helps you, give it a ⭐ — it helps others find the project.
+
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for how to report bugs, suggest improvements, and submit PRs.
