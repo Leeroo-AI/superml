@@ -21,6 +21,8 @@
   </a>
 </p>
 
+<p align="center">If SuperML helps you, give it a ⭐ it helps others find the project.</p>
+
 ---
 
 It adds two things your coding agent doesn't have:
