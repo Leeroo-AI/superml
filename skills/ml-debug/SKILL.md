@@ -20,14 +20,17 @@ Systematically diagnose ML failures using framework-specific knowledge, not gues
 **Web mode:** WebFetch GitHub issues for the error message → WebFetch framework troubleshooting docs → WebFetch config references. Cite as `[source](URL)`. Start response with: `> Grounding: Web mode — citations from official docs and GitHub issues.`
 
 **Web mode grounding targets by response section** (aim for these counts):
-- Diagnosis root cause: 1+ citation
+- Diagnosis root cause: 1+ citation (to a specific doc section or GitHub source line, NOT a top-level page)
 - Each "Why it matters" explanation: 1+ citation or `[no KB]`
 - Each fix step: 1+ citation for the specific API/config being changed
 - Each quantitative claim ("X× faster"): 1 citation or `[no KB]`
 - Prevention items: 1+ citation for the metric/tool referenced
-Target: 5+ total citations in web mode. Below 3 is a grounding failure.
+Target: 5+ total citations in web mode, each linking to a specific doc section or source line (not top-level domain pages). Below 3 is a grounding failure. Generic page links (e.g., `huggingface.co/docs/transformers`) score lower than specific section links (e.g., `huggingface.co/docs/transformers/model_doc/mixtral#MixtralConfig`).
 
- When citing GitHub source files, use a tagged release URL (e.g., `github.com/huggingface/transformers/blob/v4.45.0/src/...`) NOT the `main` branch. **MANDATORY first WebFetch in web mode**: fetch the framework's PyPI page (`https://pypi.org/project/<package>/`) to get the current stable version — then use that version tag in ALL subsequent GitHub URLs. **Do NOT fabricate version numbers** — if you haven't fetched the PyPI page, you don't know the current version. Writing "DeepSpeed 0.18.7" or "Transformers v5.3.0" without fetching is fabrication. If you cannot fetch any URLs, use the Ungrounded response format. **Self-test**: before writing your response, count your `[source](URL)` citations. If < 2, you have not met the minimum bar — fetch more or switch to Ungrounded format.
+**PyPI pages are version-only citations**: A PyPI link confirms a version number but contributes zero technical content. Do NOT count PyPI links toward your citation minimum. You need 3+ citations that contain *technical claims* (API signatures, config defaults, known failure modes). PyPI fetches are a prerequisite step, not a citation source.
+
+ When citing GitHub source files, use a tagged release URL (e.g., `github.com/huggingface/transformers/blob/v4.45.0/src/...`) NOT the `main` branch. **MANDATORY first WebFetch in web mode**: fetch the framework's PyPI page (`https://pypi.org/project/<package>/`) to get the current stable version — then use that version tag in ALL subsequent GitHub URLs. **Do NOT fabricate version numbers** — if you haven't fetched the PyPI page, you don't know the current version. Writing "DeepSpeed 0.18.7" or "Transformers v5.3.0" without fetching is fabrication.
+**Multi-package rule**: If your diagnosis involves N frameworks, you need N PyPI fetches — one per package. Fetching DeepSpeed's version does NOT tell you the Transformers version. Each `**Version**:` line must link to the specific PyPI page it came from. If you cannot fetch any URLs, use the Ungrounded response format. **Self-test**: before writing your response, count your `[source](URL)` citations. If < 2, you have not met the minimum bar — fetch more or switch to Ungrounded format.
 
 **Web mode response template** (use this structure when in web mode):
 ```
@@ -111,6 +114,7 @@ Then write your response using the Web mode template. If WebFetch also fails, us
 4. Extract specific facts: version-specific defaults, config key names, known bug numbers — these become your citations
 4b. If the problem involves a specific model, WebFetch its `config.json` from HuggingFace (e.g., `https://huggingface.co/<org>/<model>/raw/main/config.json`) — extract `num_key_value_heads`, `num_hidden_layers`, `hidden_size` for any memory/KV math
 5. WebFetch the framework's latest release/tag page to pin the exact version — all subsequent citations must reference this version, not `main` branch
+6. **Multi-framework version rule**: If the user's setup involves multiple frameworks (e.g., DeepSpeed + Transformers + PEFT), WebFetch the PyPI page for EACH framework separately. Do NOT reuse a version fetched for one package as if it applies to another, and do NOT extrapolate version numbers. Every version number in your response must trace to a specific fetched page. **FABRICATION TRAP**: If you write a version number that did NOT appear in a fetched page, it is fabricated — even if it "looks right". Common fabrications: `transformers 5.x` (does not exist as of 2025, it's 4.x), `deepspeed 0.18+` (verify the actual latest). If you catch yourself writing a version from memory, STOP and fetch the PyPI page.
 
 Do NOT guess at the cause. Look it up first — framework-specific failure patterns are well-documented.
 
@@ -155,6 +159,7 @@ If the diagnosis is ambiguous:
 **Causal mechanism rule**: If you claim "X causes Y because of Z", you need evidence for the *mechanism*. Without a `[PageID]` or `[source](URL)`, mark it speculative: "X may cause Y (speculative) `[no KB]`". Do NOT present speculative mechanisms in a "Why it hurts" format that implies certainty — use conditional language and tag `[no KB]`.
 
 **Arithmetic verification rule**: If your diagnosis includes ANY math (memory budgets, KV cache sizes, batch calculations, step counts), you MUST show the full calculation with labeled inputs. Every input number must come from a fetched source (model config, framework docs) or be marked `[assumed]`. Do NOT use round numbers from memory — e.g., "Mistral has 32 KV heads" is wrong (it has 8); fetch `config.json` to verify.
+**Quantitative claim sourcing rule**: If you state a ratio or magnitude (e.g., "30× stronger gradient", "4× memory reduction"), you MUST either (a) show the arithmetic derivation with sourced inputs, or (b) cite a source that states the ratio directly. Unsourced ratios presented as facts are a grounding violation — tag them `[no KB]` if you cannot derive or cite them.
 
 **Version pinning rule**: State the exact framework version (e.g., `vLLM 0.6.0`, not just "vLLM") in both Diagnosis and Fix. Config keys, CLI flags, and defaults change across versions — unversioned advice is unverifiable and hurts specificity.
 
@@ -207,6 +212,7 @@ For any parameter change, state clearly: (1) the framework default, (2) the user
 6. When providing inspection/debugging code, use the actual framework APIs (e.g., `trainer.get_train_dataloader()` not a manually reconstructed DataLoader) — generic recreations won't reproduce the exact behavior
 
 **Correctness self-test**: Before finalizing, re-read each fix step and ask: "If the user copy-pastes this exactly, will it work?" Check: (a) import statements present, (b) variable names match user's code, (c) config keys verified against fetched docs, (d) no placeholder values like `<your_value>`. If any check fails, fix it before outputting.
+**No stub code rule**: Never leave `pass`, `# TODO`, or `...` in code you present as a fix. Every function body must be implemented. If you cannot implement a step (e.g., optimizer state surgery), either (a) write the full implementation using documented APIs, or (b) explicitly state "this requires manual inspection of your checkpoint format" — do NOT present a stub as if it's a working script.
 7. **Parameter class verification**: Before referencing any config parameter (e.g., `max_seq_length`), verify which class it belongs to (e.g., `SFTTrainer` vs `TrainingArguments`). Misattributing a parameter to the wrong class is a correctness error — the user will put it in the wrong place and it will silently do nothing.
 8. **Memory arithmetic for OOM fixes**: Always include explicit per-GPU memory math (model params + optimizer states + activations + KV cache + overhead) so the user can verify the fix will actually fit. Show the calculation, don't just assert "this will fit".
 
@@ -226,6 +232,7 @@ For any parameter change, state clearly: (1) the framework default, (2) the user
 7. Check every recommended parameter value against the framework default — if they match, you're recommending a non-fix. Remove it or pick a different value.
 8. If you computed KV cache math, verify you used `num_key_value_heads` (not `num_attention_heads`) — GQA models differ by 4-8×.
 9. Check that every version number you cited came from a fetched source (PyPI, releases page) — not from memory.
+10. Check that you fetched a SEPARATE PyPI/releases page for EACH framework in your response. If your diagnosis mentions DeepSpeed AND Transformers but you only fetched DeepSpeed's PyPI, the Transformers version is fabricated — go fetch it now.
 
 Present the result:
 
@@ -301,6 +308,7 @@ Present the result:
 | **Fix steps without concrete values** | "Try a lower learning rate" or "reduce batch size" without saying to what | Every fix step needs an exact value with reasoning: "Set lr=1e-5 (was 3e-4, ~30× reduction to let aux loss compete with LM loss gradient)". Ranges are acceptable only with a recommended starting point. |
 
 | **Recommending framework defaults as fixes** | "Set max_grad_norm=1.0" when that's already the default | Before recommending ANY parameter value, verify the framework default. If your recommendation equals the default, it's a non-fix. WebFetch the framework's TrainingArguments or config docs to confirm defaults before writing fix steps. |
+| **Reducing global LR when a component-specific LR exists** | MoE router collapse, LoRA instability — global LR reduction slows ALL training when only one component needs adjustment | Check if the framework supports component-specific LR (e.g., `router_lr`, `lora_alpha` scaling, parameter group overrides). Prefer targeted LR changes over global ones. "Set router LR=1e-3 (global LR stays 3e-4)" beats "Lower global LR from 3e-4 to 1e-4". |
 | **Using version-specific CLI flag syntax without verification** | vLLM `--speculative-config '{JSON}'` only works in recent versions; older versions use `--speculative-model` + `--num-speculative-tokens` as separate flags | WebFetch the framework's CLI arg parser or `--help` output for the user's installed version. When multiple flag syntaxes exist across versions, show BOTH the modern and legacy forms with version cutoffs: "vLLM ≥0.6.2: `--speculative-config`; vLLM <0.6.2: `--speculative-model` + `--num-speculative-tokens`". |
 | **Verifying serving fixes with synchronous requests** | Script sends requests one at a time, so it tests single-user latency, not the concurrent load that triggered the problem | Serving verification MUST use `asyncio.gather()` or equivalent to send N concurrent requests matching the user's stated concurrency (e.g., 50 users → 50 concurrent requests). Measure p50/p95/p99 across the batch. A sequential loop that hits the endpoint 50 times in series will show ~1/50th of the real tail latency. |
 | **Setting `max-num-seqs` higher than actual concurrency for latency optimization** | Higher `max-num-seqs` means more requests batched together, which INCREASES p99 latency per request due to longer decode iterations | For latency-sensitive serving, set `max-num-seqs` ≤ 2× actual concurrent users (e.g., 50 users → `--max-num-seqs 64-100`, NOT 256). Higher values optimize throughput at the cost of tail latency. State the tradeoff explicitly. |

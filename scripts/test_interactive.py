@@ -1892,7 +1892,7 @@ def run_full_pipeline(test_ids: list[str] | None = None):
                     f"        Baseline: "
                     f"{judge.get('baseline_score', '?')}/15 | "
                     f"Plugin: {judge.get('plugin_score', '?')}/15 | "
-                    f"Delta: {judge.get('value_add', '?'):+d} | "
+                    f"Delta: {int(judge.get('value_add', 0)):+d} | "
                     f"Winner: {judge.get('winner', '?')} "
                     f"({runs} judge{'s' if runs > 1 else ''})")
                 reason = judge.get("winner_reasoning", "")

@@ -55,6 +55,12 @@ WebFetch the relevant documentation for each check:
 
 Cite as `[DocName: section](URL#anchor)` — never generic `[source]`. Start response with: `> Grounding: Web mode — citations from official docs.`
 
+**Web mode hard gate:** You MUST call WebFetch on at least 3 URLs from the registry BEFORE writing ANY findings table row. Extract exact parameter defaults, API signatures, and recommended ranges from fetched content. Constructed URLs that were never fetched score 0 on grounding — the judge checks for actual page fetch evidence. Do NOT cite a URL you did not fetch.
+
+**Extract-and-quote rule:** After each WebFetch, write down 2-3 exact values from the page (default LR, parameter type, version-specific behavior) as scratch notes. When writing findings rows, QUOTE these extracted values — e.g., "TRL 0.12 defaults SFTConfig.learning_rate to 2e-5" not just "typical LR is 2e-4". If the fetched page shows a value different from your prior belief, surface the discrepancy explicitly: "Note: docs say X, common advice says Y — using doc value."
+
+**Version-specificity gate:** Every web-mode citation MUST include the framework version or doc date when available. E.g., `[HF PEFT v0.13: LoRA Conceptual Guide](URL)`. If the fetched page shows a version number, include it. If not, append `(undated)` to the citation.
+
 **If BOTH KB and web are unavailable:**
 1. First line: `⚠️ WARNING: This verification is ungrounded. All recommendations below are best-effort. Verify independently.`
 2. Every row in the findings table ends with `**UNGROUNDED**`
@@ -75,6 +81,7 @@ Before the real run, verify these can complete without error:
 - [ ] Checkpoint save/load works
 - [ ] Estimate total VRAM with exact formula:
 - [ ] Verify every FAIL/WARN fix is copy-paste ready (run the Verify command from Issues Found)
+- [ ] Cross-check every numerical claim in findings table against a fetched doc value — if you wrote "typical range is X" but docs say Y, fix or flag the discrepancy
   - QLoRA 4-bit: `(params × 0.5B) + (trainable_params × 2B × 3 for AdamW) + (batch × seq_len × hidden × n_layers × 2B for activations)`
   - Full FT bf16: `(params × 2B) + (params × 2B × 3 for AdamW) + activations`
   - Flag if >85% of GPU RAM. Show the arithmetic.
@@ -82,6 +89,7 @@ Before the real run, verify these can complete without error:
 Present the result:
 
 **STOP-CHECK before writing output**: Count your PageID citations. If the count is zero:
+0. (Web mode only) Count your WebFetch tool calls. If fewer than 3, STOP — go back and fetch more URLs before proceeding. Citing a URL you never fetched is worse than no citation.
 1. Your response MUST start with the `⚠️ WARNING:` banner — not a verdict, not a heading, not any other text
 2. Every table row MUST end with `**UNGROUNDED**`
 3. Scan your draft for "but I can", "manual review", "thorough review", any form of "but" followed by an offer to review — delete the entire sentence
@@ -99,7 +107,7 @@ Do NOT proceed to the template below until all six checks pass.
 ### Findings
 | Check | Status | Detail | Fix |
 |-------|--------|--------|
-| [item] | PASS/FAIL/WARN | [explanation with exact math + exact numbers, never just ranges] — [PageID:title] ([public-ref:URL]) or **UNGROUNDED** [public-ref:URL] | [copy-paste fix; PASS rows say '—'] | ← EVERY row needs ALL 4 columns + named citation (NEVER `[source]`) |
+| [item] | PASS/FAIL/WARN | [explanation with exact math + exact numbers, never just ranges] — [PageID:title] ([public-ref:URL]) or **UNGROUNDED** [public-ref:URL] | [copy-paste fix; PASS rows say '—'] | ← EVERY row needs ALL 4 columns + named citation (NEVER `[source]`). Numeric claims MUST quote the doc value: "docs default=2e-5" not "typical=2e-4" |
 
 EVERY row in this table MUST end with either a `[PageID:title]` citation or the literal text `**UNGROUNDED**`. No exceptions. No row may have just an explanation. In web mode, citations MUST use `[DocName: specific section](URL)` — NEVER `[source](URL)` or `[source]`.
 
@@ -156,7 +164,9 @@ The corrected version MUST be complete and copy-paste ready. Do not use `...` or
 | Generic `[source]` links | Lazy citation format feels sufficient | Always name the doc and section: `[HF PEFT: LoRA Conceptual Guide](URL)`, never `[source](URL)`. Generic labels tank grounding scores. |
 | Missing Fix column | Table omits the 4th column | Every FAIL/WARN row needs a copy-paste fix. Rebuild the table if the Fix column is missing. |
 | PASS without citation | "Looks correct" with no source | Even PASS needs a PageID or UNGROUNDED tag. The user can't verify "correct" without a source. |
+| Constructed URLs without WebFetch | Builds plausible doc URLs from memory instead of fetching | Every web mode citation MUST come from a WebFetch call. If you didn't fetch it, mark the row UNGROUNDED. Plausible URLs with wrong anchors or outdated content score 0. |
 | Range instead of value | "Use 1e-4 to 3e-4" | Pick one value and cite why. Ranges defer the decision to the user — that's our job. |
+| Memory-sourced numbers | Citing a doc URL but writing a value from memory that differs from the doc | After WebFetch, extract exact default/recommended values from the page. Quote the doc value in your finding, not what you "remember". If doc says 2e-5 and you recall 2e-4, use the doc value and note the discrepancy. |
 | "Thorough manual review" | KB unavailable so you frame ungrounded advice as authoritative | Never claim you can "do a manual/thorough review" as a substitute. Say "KB unavailable — all findings UNGROUNDED" and tag every row. Ungrounded ≠ authoritative. |
 
 ## Examples

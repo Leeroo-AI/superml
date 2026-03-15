@@ -62,6 +62,8 @@ Only if ALL WebFetch calls fail with network errors:
 
 **Hard rule**: If you wrote "KB tools aren't authenticated" or similar and have not yet called WebFetch, STOP GENERATING. Go back and call WebFetch NOW. Do not continue writing advice. This is the #1 scoring failure.
 
+**Grounding completeness**: After all WebFetch/KB calls, verify you have citations covering: (1) model architecture/requirements, (2) framework-specific API/config, AND (3) the specific failure mode the user reported (e.g., hallucination, overfitting, divergence). If any of these three angles is missing a citation, do one more lookup before writing.
+
 ### Phase 1: Review History
 
 1. Read `experiments/journal.md` if it exists — what's been tried, what worked, what didn't
@@ -70,13 +72,15 @@ Only if ALL WebFetch calls fail with network errors:
 
 **Gate**: You know what's been tried and can explain why each proposed experiment is different from previous attempts.
 
+**Data quality check**: If the user reports hallucinations, factual errors, or wrong entity names, ALWAYS include a data-quality hypothesis before hyperparameter changes. Hallucinated facts often mean the training data itself contains errors, inconsistent formatting, or missing grounding context — no amount of LR tuning fixes bad data. Recommend: (1) sample 50-100 training examples and audit for correctness, (2) check if entity names/facts in training data match expected outputs, (3) consider adding grounding context (e.g., product catalog) to each training example.
+
 **Correctness check**: Before proposing any hypothesis, verify your understanding of the model architecture and training setup. If the user mentions a specific model, look up its fine-tuning requirements and known issues (KB: `search_knowledge`; Web: WebFetch the model card and framework docs). Explicitly state what you verified: "Confirmed: Llama-3-8B uses GQA with 8 KV heads, BOS token is <|begin_of_text|> [source]".
 
 **Model variant check**: If the user is fine-tuning, verify they're using the right base: Instruct models are for chat/instruction tasks, base models for continued pretraining or domain adaptation. If their choice seems mismatched (e.g., fine-tuning base model for chat, or instruct model for domain pretraining), flag it as Option 0 before other recommendations. Cite the model card for variant differences.
 
 **Specificity rule**: Every recommendation must use the user's actual numbers AND show the reasoning. "Try a lower LR" → "Try 5e-5 (halving your current 1e-4 — a conservative first step) [source or unverified]". Every option in Phase 3 must name their model, dataset size, current metric, and hardware.
 
-**Proportional change rule**: Never recommend changing a hyperparameter by more than 3× in a single experiment unless a fetched source explicitly recommends a larger jump for this scenario. A 5× LR drop risks underfitting just as a 5× increase risks overfitting. Show the math: "Current: 1e-4 → Proposed: 5e-5 (2× reduction)".
+**Proportional change rule (HARD GATE)**: Never recommend changing a hyperparameter by more than 3× in a single experiment unless a fetched source explicitly recommends a larger jump for this scenario AND you quote that source. Before emitting any option, compute the ratio: `proposed / current`. If ratio > 3× or < 1/3×, either split into two experiments or find a source justifying the jump. Show the math: "Current: 1e-4 → Proposed: 5e-5 (2× reduction)". A 5× reduction (e.g., 1e-4 → 2e-5) violates this rule — use 3e-5 or 5e-5 instead.
 
 ### Phase 2: Rank Options
 
@@ -99,15 +103,21 @@ For the top 2-3 hypotheses from Phase 1:
 
 **Quote, don't paraphrase**: For each citation, include a 5-15 word direct quote or specific number from the source. "[source](URL)" alone is insufficient — write "TRL docs state 'learning_rate=2e-4 for adapters' [source](URL)". This proves you read the source and prevents hallucinated citations.
 
+**Cross-check config keys**: After WebFetch, grep the fetched content for the exact parameter names you plan to use. If a parameter name does not appear verbatim in any fetched source, do NOT use it in code — find the real name or mark it `# VERIFY`. This prevents hallucinated API parameters (e.g., writing `completion_only_loss=True` when the real API is `DataCollatorForCompletionOnlyLM`).
+
 ### Phase 3: Design Next Experiment
 
 Present ranked alternatives:
+
+**Root cause rule**: If symptoms include hallucination, factual errors, or wrong entity names, Option 1 MUST address data quality (audit, filtering, or grounding context injection), not hyperparameters. HP options go in Option 2+.
 
 **Specificity rule**: Every recommendation must reference the user's actual model name, dataset size, current metric values, and hardware. Generic advice like "try a lower LR" without a specific number for their setup is not acceptable — always give a concrete value with rationale.
 
 **Before emitting — STOP AND COUNT**: Scan every sentence. Count ALL tags (`[PageID: xxx]`, `[source](URL)`, or `[unverified — no KB access]`). **Minimum 6 tags total or do not emit.** Tag every sentence with a number, LR, model name, rank, token count, or recommendation. Zero-tag responses score 1/3 — same as hallucination. If you said "KB tools aren't authenticated" anywhere and have zero `[unverified]` tags, your response is broken — go back and tag NOW.
 
 **Before emitting — VERIFY CORRECTNESS**: For each concrete number you recommend (LR, rank, batch size, warmup ratio), confirm it appears in at least one fetched source OR is derived from the user's own reported numbers. If a number came from your training data rather than a fetched source, tag it `[unverified]`. Do not present training-data knowledge as if it came from a citation.
+
+**Before emitting — VERIFY PARAMETER NAMES**: For every config key, argument name, or API parameter in your code blocks, confirm the exact spelling and module path against fetched docs. Common traps: TRL uses `DataCollatorForCompletionOnlyLM` (not `completion_only_loss=True`), PEFT uses `use_rslora` (not `rslora`), `neftune_noise_alpha` is the SFTTrainer arg (not `neftune_alpha`). If you cannot find the exact parameter name in a fetched source, mark the code line with `# VERIFY: param name unconfirmed` and tell the user to check.
 
 ```
 ## Iteration Options
@@ -164,6 +174,8 @@ Present ranked alternatives:
 | Writing "no KB access" then untagged advice | "I acknowledged the limitation" | Acknowledging != compliance. Every technical sentence STILL needs `[unverified]` or a web citation. Count your tags — if zero, you failed. |
 | Citing a URL without quoting its content | "The link is the evidence" | A URL proves you fetched, not that you read it. Include a 5-15 word quote or specific number from the source next to every `[source](URL)` tag. |
 | Recommending >3× parameter change in one step | "Go big or go home" | Large jumps make it impossible to diagnose what worked. Halve or double — never 5× in one experiment. Show the math. |
+| Using invented parameter names in code | "I'm pretty sure the flag is called X" | Every config key and API parameter in code blocks must match fetched docs verbatim. If you can't find it, mark `# VERIFY` and tell the user. Hallucinated param names silently break training. |
+| Treating hallucination as only an HP problem | "Lower LR will fix the made-up facts" | Hallucinated entities (wrong names, invented products) usually signal bad training data — audit 50-100 examples for correctness before tuning LR/rank. Data fixes beat HP sweeps for factual grounding. |
 
 ## Examples
 

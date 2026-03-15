@@ -81,6 +81,8 @@ Your training data is months old. The KB has current framework docs. When the tw
 
 **Web mode grounding for comparison tasks**: When comparing N items (models, methods, tools), you need at least N WebFetch calls — one per item being compared. A single overview page cannot ground all items. For model merging: fetch mergekit docs + one source per merge method. For model comparisons: fetch each model card.
 
+**Pipeline/system design grounding**: When the user asks to build a complete system (e.g., "build a code search engine", "design an embedding pipeline"), fetch: (1) model card for the recommended model, (2) the serving/inference framework docs, (3) the vector DB/index docs, (4) at least one benchmark page with real throughput/latency numbers for the model+hardware combo. Pipeline questions require MORE grounding than concept questions, not less.
+
 **Benchmark fetching for comparison tasks**: When comparing methods, also WebFetch at least one benchmark page (blog post, paper, or leaderboard) that has **measured numbers** (perplexity, throughput, memory). Without benchmark data, comparison tables devolve into vague qualitative claims. Search for: `[method] benchmark results [model size]`.
 
 > **Citation density target**: Aim for 10+ unique citations in the final answer. KB mode: `[PageID]` citations, call `get_page` on at least 3 top results. Web mode: `[source](URL)` citations from distinct doc pages. **If you have fewer than 5 unique citations after Phase 2, STOP and fetch more sources before synthesizing.**
@@ -117,6 +119,8 @@ Your training data is months old. The KB has current framework docs. When the tw
 
 > **Config schema verification (GATE)**: Before showing any tool/library config file (mergekit YAML, DeepSpeed JSON, vLLM args), WebFetch or search_knowledge for the config schema or a working example. Verify: (1) top-level keys vs nested keys — don't put a top-level field inside a list, (2) required vs optional fields, (3) exact field names — no invented fields. Example failure: mergekit's `base_model` is a top-level key, NOT an entry in the `models:` array.
 
+> **mergekit-specific config trap**: For TIES/DARE configs, the `models:` list must contain ONLY the fine-tuned models — do NOT include the base model as an entry in the `models:` array. The base model is specified ONLY via the top-level `base_model:` key. Including it in both places double-counts it and corrupts the merge. Always fetch a working mergekit example config before writing one.
+
 > **Config value-type verification**: Boolean vs string vs numeric fields are a common hallucination. Example: mergekit's `int_space` expects a string value (e.g., `"tri"`), NOT a boolean (`true`). Always confirm the expected type from a fetched config example — do not guess whether a field takes `true` or a string enum.
 
 ### Phase 3: Synthesize
@@ -125,6 +129,7 @@ Compose a structured answer:
 
 **Completeness rules:**
 - Code must be **runnable as-is**: include imports, CLI arg parsing, and shebang lines — never reference a hypothetical `train.py` without providing it
+- **System design / pipeline questions STILL require code**: If the user asks to "design" or "build" a pipeline, your response must include a working Python script (with imports, main function, and CLI entry point) — not just a diagram or prose description. Architecture diagrams are supplementary, never primary. A response with boxes but no code scores 0 on actionability.
 - Pin versions: `pip install mergekit==0.3.1`, not `pip install mergekit`
 - Include **deployment scaffolding** when the use case implies production: Dockerfile, docker-compose.yml, or systemd unit — not just the Python code
 - When recommending a library/model, verify the **integration path** works (e.g., does model X actually load with library Y's API? Check the docs, don't assume)
@@ -135,6 +140,7 @@ Compose a structured answer:
 - Web mode citations must include the **doc version or date**: `[source](URL)` is insufficient — use `[source: vLLM v0.4.1 docs](URL)` or `[source: retrieved 2026-03](URL)` so the user knows the freshness of the info
 - **KB mode citations must include primary source URLs**: `[PageID]` alone is not publicly verifiable. After every `[PageID]` citation, add the primary source the KB page references — the paper URL, official docs URL, or GitHub link. Format: `[PageID] ([primary docs](URL))`. If the KB page doesn't reference a primary source, WebFetch the official docs for that claim and add the URL yourself. Target: at least 50% of KB citations include a publicly verifiable URL.
 - **Citation authenticity**: Only cite URLs you actually fetched via WebFetch in this session. Do not reconstruct citations from training data memory — if you didn't WebFetch it, you cannot cite it. Fabricated citations (URLs that look plausible but weren't fetched) are worse than no citations.
+- **Numeric claim authenticity**: Benchmark scores (NDCG, perplexity, BLEU, accuracy), throughput numbers, and latency claims follow the same rule — only include numbers you found in a fetched source. If you cannot find the number in a fetched page, either compute it from known specs (show the math) or mark `[needs benchmark]`. Presenting training-data numbers as if they were sourced is a grounding failure.
 - Config files must be **complete** — do not omit fields. If a config has 8 required fields, show all 8 with KB-sourced values
 - Config files must be **structurally correct** — fetch a working example from docs/GitHub before writing configs. Verify top-level vs nested keys, list vs scalar values, and required field placement
 - Include a **validation/test snippet** (curl test, benchmark script, or smoke test) so the user can verify their setup works
@@ -242,6 +248,8 @@ _(Mandatory — minimum 7 items, each MUST include: 1) the specific failure symp
 | Omitting hardware requirements | "The code is enough" | Users need to know if their GPU can run it BEFORE they start. Always include a hardware requirements table with exact GB. |
 | Using wrong pooling method or tokenizer settings in code | "CLS pooling is standard for transformers" | Pooling method (CLS vs mean vs last-token) varies per model. Fetch the model card and use the EXACT pooling specified. Wrong pooling silently degrades retrieval quality by 10-20%. |
 | Writing pipeline steps with mismatched assumptions | "512 tokens is a safe chunk size" | Chunk sizes, embedding dims, and dtypes must be consistent across ALL pipeline steps. If model supports 1024 tokens, don't chunk at 512 — you're throwing away context. If you start a serving endpoint, subsequent steps must call it, not reload the model. |
+| Producing an "architecture sketch" instead of runnable code | "The user needs the big picture first" | Every response MUST include copy-pasteable code — a pipeline question needs an actual Python script with imports, not ASCII box diagrams. If you catch yourself drawing boxes with `┌──┐` instead of writing `import`, you have failed the actionability requirement. |
+| Claiming benchmark scores without citations | "CoIR NDCG@10 is 67.4" | Every numeric score (NDCG, perplexity, throughput) needs a `[source](URL)` or `[PageID]` citation pointing to the benchmark page. Uncited numbers are indistinguishable from hallucinations — mark `[needs benchmark]` if you cannot find the source. |
 
 ## Examples
 
