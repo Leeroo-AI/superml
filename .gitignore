@@ -11,3 +11,5 @@ scripts/judge_prompt.md
 scripts/test_interactive.py
 docs/
 marlink-data/
+self-refine/logs/
+!self-refine/logs/.gitkeep
