@@ -148,13 +148,22 @@ If it's working, your agent will ground its answer in documentation (KB citation
 
 [ml-expert](agents/ml-expert.md): a persistent ML engineer agent for the bigger stuff: pipeline reviews, deep analysis, framework deep-dives. It remembers your hardware setup, past experiments, and lessons learned across sessions.
 
+## Optimize for Your Domain
+
+SuperML ships with a self-refine toolkit that lets you optimize the skills for your specific ML niche. Describe your domain, generate a test suite, and run an automated judge-refine loop:
+
+```bash
+python self-refine/generate_suite.py "biomedical fine-tuning with clinical NLP"
+python self-refine/run.py --suite self-refine/suites/biomedical-fine-tuning-with-clinical-nlp.yaml
+```
+
+See [self-refine/README.md](self-refine/README.md) for the full guide.
+
 ## SuperML for Enterprise
 
 > **SuperML is integrated in our enterprise platform** — forecasting & planning, fraud & anomaly detection, customer analytics, recommendation systems, document intelligence, and customer service automation.
 >
 > [**Request enterprise access →**](https://novel-platform.leeroo.com/auth)
-
-If SuperML helps you, give it a ⭐ — it helps others find the project.
 
 ## Contributing
 
