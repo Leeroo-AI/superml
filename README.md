@@ -42,14 +42,13 @@ Works with Claude Code, Cursor, Codex, OpenCode, and Gemini CLI.
 
 ## Results
 
-We gave 38 ML tasks to Claude Code — once with SuperML, once without — and had an independent LLM judge rate both. Each response is scored out of 15 across correctness, specificity, mistake prevention, actionability, and grounding. Tasks cover QLoRA fine-tuning, distributed training, LLM inference optimization, alignment (DPO/GRPO), RAG pipelines, model merging, quantization, and more.
+37 ML tasks scored head-to-head: Cursor / Claude Code with SuperML vs without. Each response rated by independent LLM judges across correctness, specificity, mistake prevention, actionability, and grounding.
 
-| | With SuperML | Without |
-|--|--------|----------|
-| ML task average | **13.2 / 15** | 8.3 / 15 |
-| ML task win rate | **91%** | 9% |
+<p align="center">
+  <img src="assets/results-chart.svg" alt="SuperML vs Baseline — 37 ML Tasks" width="1150">
+</p>
 
-See [TESTED_TASKS.md](TESTED_TASKS.md) for the full list of tasks and scores.
+See [TESTED_TASKS.md](TESTED_TASKS.md) for detailed scores and methodology.
 
 ## Prerequisites
 

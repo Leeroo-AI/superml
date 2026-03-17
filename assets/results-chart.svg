@@ -1,0 +1,426 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1150 654" width="1150" height="654">
+<style>
+    text { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+    .cat-label { font-size: 11px; font-weight: 600; fill: #1e293b; letter-spacing: 0.02em; }
+    .task-label { font-size: 10px; fill: #334155; }
+    .score-label { font-size: 8.5px; font-weight: 600; }
+    .delta-label { font-size: 9.5px; font-weight: 700; }
+    .axis-label { font-size: 8.5px; fill: #94a3b8; }
+    .legend-text { font-size: 10px; fill: #475569; }
+    .stat-value { font-size: 32px; font-weight: 700; }
+    .stat-label { font-size: 11px; fill: #64748b; }
+</style>
+<rect width="1150" height="654" fill="#ffffff" rx="10"/>
+<text x="191.66666666666666" y="36" class="stat-value" fill="#F9AE18" text-anchor="middle">88%</text>
+<text x="191.66666666666666" y="52" class="stat-label" text-anchor="middle">with SuperML avg score</text>
+<text x="575.0" y="36" class="stat-value" fill="#64748b" text-anchor="middle">55%</text>
+<text x="575.0" y="52" class="stat-label" text-anchor="middle">without SuperML avg score</text>
+<text x="958.3333333333333" y="36" class="stat-value" fill="#16a34a" text-anchor="middle">91%</text>
+<text x="958.3333333333333" y="52" class="stat-label" text-anchor="middle">win rate</text>
+<line x1="20" y1="62" x2="1130" y2="62" stroke="#e2e8f0" stroke-width="1"/>
+<rect x="20" y="72" width="30" height="8" rx="2" fill="#F9AE18"/>
+<text x="56" y="79" class="legend-text">Cursor / Claude Code + SuperML</text>
+<line x1="250" y1="73" x2="250" y2="79" stroke="#64748b" stroke-width="2.5" stroke-linecap="round"/>
+<circle cx="250" cy="76" r="2.5" fill="#64748b"/>
+<text x="258" y="79" class="legend-text">Cursor / Claude Code alone</text>
+<rect x="450" y="72" width="22" height="8" rx="2" fill="#bbf7d0" stroke="#16a34a" stroke-width="0.5"/>
+<text x="478" y="79" class="legend-text">improvement</text>
+<rect x="580" y="72" width="22" height="8" rx="2" fill="#fecaca" stroke="#dc2626" stroke-width="0.5"/>
+<text x="608" y="79" class="legend-text">baseline wins</text>
+<line x1="180.0" y1="98" x2="180.0" y2="620" stroke="#e2e8f0" stroke-width="1"/>
+<text x="180.0" y="94" class="axis-label" text-anchor="middle">0%</text>
+<line x1="262.5" y1="98" x2="262.5" y2="620" stroke="#e2e8f0" stroke-width="1"/>
+<text x="262.5" y="94" class="axis-label" text-anchor="middle">25%</text>
+<line x1="345.0" y1="98" x2="345.0" y2="620" stroke="#e2e8f0" stroke-width="1"/>
+<text x="345.0" y="94" class="axis-label" text-anchor="middle">50%</text>
+<line x1="427.5" y1="98" x2="427.5" y2="620" stroke="#e2e8f0" stroke-width="1"/>
+<text x="427.5" y="94" class="axis-label" text-anchor="middle">75%</text>
+<line x1="510.0" y1="98" x2="510.0" y2="620" stroke="#e2e8f0" stroke-width="1"/>
+<text x="510.0" y="94" class="axis-label" text-anchor="middle">100%</text>
+<line x1="213.0" y1="104" x2="213.0" y2="620" stroke="#f1f5f9" stroke-width="0.5"/>
+<line x1="246.0" y1="104" x2="246.0" y2="620" stroke="#f1f5f9" stroke-width="0.5"/>
+<line x1="279.0" y1="104" x2="279.0" y2="620" stroke="#f1f5f9" stroke-width="0.5"/>
+<line x1="312.0" y1="104" x2="312.0" y2="620" stroke="#f1f5f9" stroke-width="0.5"/>
+<line x1="378.0" y1="104" x2="378.0" y2="620" stroke="#f1f5f9" stroke-width="0.5"/>
+<line x1="411.0" y1="104" x2="411.0" y2="620" stroke="#f1f5f9" stroke-width="0.5"/>
+<line x1="444.0" y1="104" x2="444.0" y2="620" stroke="#f1f5f9" stroke-width="0.5"/>
+<line x1="477.0" y1="104" x2="477.0" y2="620" stroke="#f1f5f9" stroke-width="0.5"/>
+<rect x="20" y="104" width="540" height="24" fill="#f8fafc" stroke="#e2e8f0" stroke-width="0.5" rx="3"/>
+<text x="28" y="120" class="cat-label">Fine-Tuning</text>
+<rect x="180" y="130" width="330" height="22" fill="#fafbfc"/>
+<text x="172" y="144.5" class="task-label" text-anchor="end">Multimodal QLoRA</text>
+<rect x="356.0" y="136.0" width="154.0" height="10" fill="#bbf7d0" rx="2"/>
+<rect x="180.0" y="137.0" width="330.0" height="8" fill="#F9AE18" opacity="0.15" rx="2"/>
+<rect x="505.0" y="136.0" width="5" height="10" fill="#F9AE18" rx="2"/>
+<line x1="356.0" y1="136.0" x2="356.0" y2="146.0" stroke="#64748b" stroke-width="2" stroke-linecap="round"/>
+<circle cx="356.0" cy="141.0" r="2.5" fill="#64748b"/>
+<text x="510.0" y="134.0" class="score-label" fill="#F9AE18" text-anchor="middle">100%</text>
+<text x="356.0" y="134.0" class="score-label" fill="#64748b" text-anchor="middle">53%</text>
+<text x="520" y="144.5" class="delta-label" fill="#16a34a">+47%</text>
+<text x="172" y="166.5" class="task-label" text-anchor="end">DPO Alignment</text>
+<rect x="356.0" y="158.0" width="154.0" height="10" fill="#bbf7d0" rx="2"/>
+<rect x="180.0" y="159.0" width="330.0" height="8" fill="#F9AE18" opacity="0.15" rx="2"/>
+<rect x="505.0" y="158.0" width="5" height="10" fill="#F9AE18" rx="2"/>
+<line x1="356.0" y1="158.0" x2="356.0" y2="168.0" stroke="#64748b" stroke-width="2" stroke-linecap="round"/>
+<circle cx="356.0" cy="163.0" r="2.5" fill="#64748b"/>
+<text x="510.0" y="156.0" class="score-label" fill="#F9AE18" text-anchor="middle">100%</text>
+<text x="356.0" y="156.0" class="score-label" fill="#64748b" text-anchor="middle">53%</text>
+<text x="520" y="166.5" class="delta-label" fill="#16a34a">+47%</text>
+<rect x="180" y="174" width="330" height="22" fill="#fafbfc"/>
+<text x="172" y="188.5" class="task-label" text-anchor="end">GRPO Alignment</text>
+<rect x="356.0" y="180.0" width="154.0" height="10" fill="#bbf7d0" rx="2"/>
+<rect x="180.0" y="181.0" width="330.0" height="8" fill="#F9AE18" opacity="0.15" rx="2"/>
+<rect x="505.0" y="180.0" width="5" height="10" fill="#F9AE18" rx="2"/>
+<line x1="356.0" y1="180.0" x2="356.0" y2="190.0" stroke="#64748b" stroke-width="2" stroke-linecap="round"/>
+<circle cx="356.0" cy="185.0" r="2.5" fill="#64748b"/>
+<text x="510.0" y="178.0" class="score-label" fill="#F9AE18" text-anchor="middle">100%</text>
+<text x="356.0" y="178.0" class="score-label" fill="#64748b" text-anchor="middle">53%</text>
+<text x="520" y="188.5" class="delta-label" fill="#16a34a">+47%</text>
+<text x="172" y="210.5" class="task-label" text-anchor="end">Distributed Pretraining</text>
+<rect x="312.0" y="202.0" width="198.0" height="10" fill="#bbf7d0" rx="2"/>
+<rect x="180.0" y="203.0" width="330.0" height="8" fill="#F9AE18" opacity="0.15" rx="2"/>
+<rect x="505.0" y="202.0" width="5" height="10" fill="#F9AE18" rx="2"/>
+<line x1="312.0" y1="202.0" x2="312.0" y2="212.0" stroke="#64748b" stroke-width="2" stroke-linecap="round"/>
+<circle cx="312.0" cy="207.0" r="2.5" fill="#64748b"/>
+<text x="510.0" y="200.0" class="score-label" fill="#F9AE18" text-anchor="middle">100%</text>
+<text x="312.0" y="200.0" class="score-label" fill="#64748b" text-anchor="middle">40%</text>
+<text x="520" y="210.5" class="delta-label" fill="#16a34a">+60%</text>
+<rect x="180" y="218" width="330" height="22" fill="#fafbfc"/>
+<text x="172" y="232.5" class="task-label" text-anchor="end">Continual Pretraining</text>
+<rect x="378.0" y="224.0" width="110.0" height="10" fill="#bbf7d0" rx="2"/>
+<rect x="180.0" y="225.0" width="308.0" height="8" fill="#F9AE18" opacity="0.15" rx="2"/>
+<rect x="483.0" y="224.0" width="5" height="10" fill="#F9AE18" rx="2"/>
+<line x1="378.0" y1="224.0" x2="378.0" y2="234.0" stroke="#64748b" stroke-width="2" stroke-linecap="round"/>
+<circle cx="378.0" cy="229.0" r="2.5" fill="#64748b"/>
+<text x="488.0" y="222.0" class="score-label" fill="#F9AE18" text-anchor="middle">93%</text>
+<text x="378.0" y="222.0" class="score-label" fill="#64748b" text-anchor="middle">60%</text>
+<text x="520" y="232.5" class="delta-label" fill="#16a34a">+33%</text>
+<text x="172" y="254.5" class="task-label" text-anchor="end">Vision Model Fine-tune</text>
+<rect x="356.0" y="246.0" width="132.0" height="10" fill="#bbf7d0" rx="2"/>
+<rect x="180.0" y="247.0" width="308.0" height="8" fill="#F9AE18" opacity="0.15" rx="2"/>
+<rect x="483.0" y="246.0" width="5" height="10" fill="#F9AE18" rx="2"/>
+<line x1="356.0" y1="246.0" x2="356.0" y2="256.0" stroke="#64748b" stroke-width="2" stroke-linecap="round"/>
+<circle cx="356.0" cy="251.0" r="2.5" fill="#64748b"/>
+<text x="488.0" y="244.0" class="score-label" fill="#F9AE18" text-anchor="middle">93%</text>
+<text x="356.0" y="244.0" class="score-label" fill="#64748b" text-anchor="middle">53%</text>
+<text x="520" y="254.5" class="delta-label" fill="#16a34a">+40%</text>
+<rect x="180" y="262" width="330" height="22" fill="#fafbfc"/>
+<text x="172" y="276.5" class="task-label" text-anchor="end">Embedding Fine-tune</text>
+<rect x="400.0" y="268.0" width="66.0" height="10" fill="#bbf7d0" rx="2"/>
+<rect x="180.0" y="269.0" width="286.0" height="8" fill="#F9AE18" opacity="0.15" rx="2"/>
+<rect x="461.0" y="268.0" width="5" height="10" fill="#F9AE18" rx="2"/>
+<line x1="400.0" y1="268.0" x2="400.0" y2="278.0" stroke="#64748b" stroke-width="2" stroke-linecap="round"/>
+<circle cx="400.0" cy="273.0" r="2.5" fill="#64748b"/>
+<text x="466.0" y="266.0" class="score-label" fill="#F9AE18" text-anchor="middle">87%</text>
+<text x="400.0" y="266.0" class="score-label" fill="#64748b" text-anchor="middle">67%</text>
+<text x="520" y="276.5" class="delta-label" fill="#16a34a">+20%</text>
+<text x="172" y="298.5" class="task-label" text-anchor="end">Knowledge Distillation</text>
+<rect x="356.0" y="290.0" width="110.0" height="10" fill="#bbf7d0" rx="2"/>
+<rect x="180.0" y="291.0" width="286.0" height="8" fill="#F9AE18" opacity="0.15" rx="2"/>
+<rect x="461.0" y="290.0" width="5" height="10" fill="#F9AE18" rx="2"/>
+<line x1="356.0" y1="290.0" x2="356.0" y2="300.0" stroke="#64748b" stroke-width="2" stroke-linecap="round"/>
+<circle cx="356.0" cy="295.0" r="2.5" fill="#64748b"/>
+<text x="466.0" y="288.0" class="score-label" fill="#F9AE18" text-anchor="middle">87%</text>
+<text x="356.0" y="288.0" class="score-label" fill="#64748b" text-anchor="middle">53%</text>
+<text x="520" y="298.5" class="delta-label" fill="#16a34a">+34%</text>
+<rect x="180" y="306" width="330" height="22" fill="#fafbfc"/>
+<text x="172" y="320.5" class="task-label" text-anchor="end">Synthetic Data Pipeline</text>
+<rect x="378.0" y="312.0" width="88.0" height="10" fill="#bbf7d0" rx="2"/>
+<rect x="180.0" y="313.0" width="286.0" height="8" fill="#F9AE18" opacity="0.15" rx="2"/>
+<rect x="461.0" y="312.0" width="5" height="10" fill="#F9AE18" rx="2"/>
+<line x1="378.0" y1="312.0" x2="378.0" y2="322.0" stroke="#64748b" stroke-width="2" stroke-linecap="round"/>
+<circle cx="378.0" cy="317.0" r="2.5" fill="#64748b"/>
+<text x="466.0" y="310.0" class="score-label" fill="#F9AE18" text-anchor="middle">87%</text>
+<text x="378.0" y="310.0" class="score-label" fill="#64748b" text-anchor="middle">60%</text>
+<text x="520" y="320.5" class="delta-label" fill="#16a34a">+27%</text>
+<rect x="20" y="338" width="540" height="24" fill="#f8fafc" stroke="#e2e8f0" stroke-width="0.5" rx="3"/>
+<text x="28" y="354" class="cat-label">Debug / Verify</text>
+<text x="172" y="378.5" class="task-label" text-anchor="end">Pre-launch Config Audit</text>
+<rect x="378.0" y="370.0" width="132.0" height="10" fill="#bbf7d0" rx="2"/>
+<rect x="180.0" y="371.0" width="330.0" height="8" fill="#F9AE18" opacity="0.15" rx="2"/>
+<rect x="505.0" y="370.0" width="5" height="10" fill="#F9AE18" rx="2"/>
+<line x1="378.0" y1="370.0" x2="378.0" y2="380.0" stroke="#64748b" stroke-width="2" stroke-linecap="round"/>
+<circle cx="378.0" cy="375.0" r="2.5" fill="#64748b"/>
+<text x="510.0" y="368.0" class="score-label" fill="#F9AE18" text-anchor="middle">100%</text>
+<text x="378.0" y="368.0" class="score-label" fill="#64748b" text-anchor="middle">60%</text>
+<text x="520" y="378.5" class="delta-label" fill="#16a34a">+40%</text>
+<rect x="180" y="386" width="330" height="22" fill="#fafbfc"/>
+<text x="172" y="400.5" class="task-label" text-anchor="end">Post-training Iteration</text>
+<rect x="334.0" y="392.0" width="176.0" height="10" fill="#bbf7d0" rx="2"/>
+<rect x="180.0" y="393.0" width="330.0" height="8" fill="#F9AE18" opacity="0.15" rx="2"/>
+<rect x="505.0" y="392.0" width="5" height="10" fill="#F9AE18" rx="2"/>
+<line x1="334.0" y1="392.0" x2="334.0" y2="402.0" stroke="#64748b" stroke-width="2" stroke-linecap="round"/>
+<circle cx="334.0" cy="397.0" r="2.5" fill="#64748b"/>
+<text x="510.0" y="390.0" class="score-label" fill="#F9AE18" text-anchor="middle">100%</text>
+<text x="334.0" y="390.0" class="score-label" fill="#64748b" text-anchor="middle">47%</text>
+<text x="520" y="400.5" class="delta-label" fill="#16a34a">+53%</text>
+<text x="172" y="422.5" class="task-label" text-anchor="end">MoE Expert Collapse</text>
+<rect x="378.0" y="414.0" width="110.0" height="10" fill="#bbf7d0" rx="2"/>
+<rect x="180.0" y="415.0" width="308.0" height="8" fill="#F9AE18" opacity="0.15" rx="2"/>
+<rect x="483.0" y="414.0" width="5" height="10" fill="#F9AE18" rx="2"/>
+<line x1="378.0" y1="414.0" x2="378.0" y2="424.0" stroke="#64748b" stroke-width="2" stroke-linecap="round"/>
+<circle cx="378.0" cy="419.0" r="2.5" fill="#64748b"/>
+<text x="488.0" y="412.0" class="score-label" fill="#F9AE18" text-anchor="middle">93%</text>
+<text x="378.0" y="412.0" class="score-label" fill="#64748b" text-anchor="middle">60%</text>
+<text x="520" y="422.5" class="delta-label" fill="#16a34a">+33%</text>
+<rect x="180" y="430" width="330" height="22" fill="#fafbfc"/>
+<text x="172" y="444.5" class="task-label" text-anchor="end">OOM on Multi-GPU</text>
+<rect x="334.0" y="436.0" width="154.0" height="10" fill="#bbf7d0" rx="2"/>
+<rect x="180.0" y="437.0" width="308.0" height="8" fill="#F9AE18" opacity="0.15" rx="2"/>
+<rect x="483.0" y="436.0" width="5" height="10" fill="#F9AE18" rx="2"/>
+<line x1="334.0" y1="436.0" x2="334.0" y2="446.0" stroke="#64748b" stroke-width="2" stroke-linecap="round"/>
+<circle cx="334.0" cy="441.0" r="2.5" fill="#64748b"/>
+<text x="488.0" y="434.0" class="score-label" fill="#F9AE18" text-anchor="middle">93%</text>
+<text x="334.0" y="434.0" class="score-label" fill="#64748b" text-anchor="middle">47%</text>
+<text x="520" y="444.5" class="delta-label" fill="#16a34a">+46%</text>
+<text x="172" y="466.5" class="task-label" text-anchor="end">Loss Spike Diagnosis</text>
+<rect x="334.0" y="458.0" width="132.0" height="10" fill="#bbf7d0" rx="2"/>
+<rect x="180.0" y="459.0" width="286.0" height="8" fill="#F9AE18" opacity="0.15" rx="2"/>
+<rect x="461.0" y="458.0" width="5" height="10" fill="#F9AE18" rx="2"/>
+<line x1="334.0" y1="458.0" x2="334.0" y2="468.0" stroke="#64748b" stroke-width="2" stroke-linecap="round"/>
+<circle cx="334.0" cy="463.0" r="2.5" fill="#64748b"/>
+<text x="466.0" y="456.0" class="score-label" fill="#F9AE18" text-anchor="middle">87%</text>
+<text x="334.0" y="456.0" class="score-label" fill="#64748b" text-anchor="middle">47%</text>
+<text x="520" y="466.5" class="delta-label" fill="#16a34a">+40%</text>
+<rect x="20" y="484" width="540" height="24" fill="#f8fafc" stroke="#e2e8f0" stroke-width="0.5" rx="3"/>
+<text x="28" y="500" class="cat-label">Inference / Serving</text>
+<rect x="180" y="510" width="330" height="22" fill="#fafbfc"/>
+<text x="172" y="524.5" class="task-label" text-anchor="end">Speculative Decoding</text>
+<rect x="356.0" y="516.0" width="154.0" height="10" fill="#bbf7d0" rx="2"/>
+<rect x="180.0" y="517.0" width="330.0" height="8" fill="#F9AE18" opacity="0.15" rx="2"/>
+<rect x="505.0" y="516.0" width="5" height="10" fill="#F9AE18" rx="2"/>
+<line x1="356.0" y1="516.0" x2="356.0" y2="526.0" stroke="#64748b" stroke-width="2" stroke-linecap="round"/>
+<circle cx="356.0" cy="521.0" r="2.5" fill="#64748b"/>
+<text x="510.0" y="514.0" class="score-label" fill="#F9AE18" text-anchor="middle">100%</text>
+<text x="356.0" y="514.0" class="score-label" fill="#64748b" text-anchor="middle">53%</text>
+<text x="520" y="524.5" class="delta-label" fill="#16a34a">+47%</text>
+<text x="172" y="546.5" class="task-label" text-anchor="end">FSDP vs DeepSpeed</text>
+<rect x="356.0" y="538.0" width="154.0" height="10" fill="#bbf7d0" rx="2"/>
+<rect x="180.0" y="539.0" width="330.0" height="8" fill="#F9AE18" opacity="0.15" rx="2"/>
+<rect x="505.0" y="538.0" width="5" height="10" fill="#F9AE18" rx="2"/>
+<line x1="356.0" y1="538.0" x2="356.0" y2="548.0" stroke="#64748b" stroke-width="2" stroke-linecap="round"/>
+<circle cx="356.0" cy="543.0" r="2.5" fill="#64748b"/>
+<text x="510.0" y="536.0" class="score-label" fill="#F9AE18" text-anchor="middle">100%</text>
+<text x="356.0" y="536.0" class="score-label" fill="#64748b" text-anchor="middle">53%</text>
+<text x="520" y="546.5" class="delta-label" fill="#16a34a">+47%</text>
+<rect x="180" y="554" width="330" height="22" fill="#fafbfc"/>
+<text x="172" y="568.5" class="task-label" text-anchor="end">p99 Latency Tuning</text>
+<rect x="312.0" y="560.0" width="176.0" height="10" fill="#bbf7d0" rx="2"/>
+<rect x="180.0" y="561.0" width="308.0" height="8" fill="#F9AE18" opacity="0.15" rx="2"/>
+<rect x="483.0" y="560.0" width="5" height="10" fill="#F9AE18" rx="2"/>
+<line x1="312.0" y1="560.0" x2="312.0" y2="570.0" stroke="#64748b" stroke-width="2" stroke-linecap="round"/>
+<circle cx="312.0" cy="565.0" r="2.5" fill="#64748b"/>
+<text x="488.0" y="558.0" class="score-label" fill="#F9AE18" text-anchor="middle">93%</text>
+<text x="312.0" y="558.0" class="score-label" fill="#64748b" text-anchor="middle">40%</text>
+<text x="520" y="568.5" class="delta-label" fill="#16a34a">+53%</text>
+<text x="172" y="590.5" class="task-label" text-anchor="end">KV Cache / PagedAttn</text>
+<rect x="312.0" y="582.0" width="176.0" height="10" fill="#bbf7d0" rx="2"/>
+<rect x="180.0" y="583.0" width="308.0" height="8" fill="#F9AE18" opacity="0.15" rx="2"/>
+<rect x="483.0" y="582.0" width="5" height="10" fill="#F9AE18" rx="2"/>
+<line x1="312.0" y1="582.0" x2="312.0" y2="592.0" stroke="#64748b" stroke-width="2" stroke-linecap="round"/>
+<circle cx="312.0" cy="587.0" r="2.5" fill="#64748b"/>
+<text x="488.0" y="580.0" class="score-label" fill="#F9AE18" text-anchor="middle">93%</text>
+<text x="312.0" y="580.0" class="score-label" fill="#64748b" text-anchor="middle">40%</text>
+<text x="520" y="590.5" class="delta-label" fill="#16a34a">+53%</text>
+<rect x="180" y="598" width="330" height="22" fill="#fafbfc"/>
+<text x="172" y="612.5" class="task-label" text-anchor="end">Quantization Shootout</text>
+<rect x="378.0" y="604.0" width="88.0" height="10" fill="#bbf7d0" rx="2"/>
+<rect x="180.0" y="605.0" width="286.0" height="8" fill="#F9AE18" opacity="0.15" rx="2"/>
+<rect x="461.0" y="604.0" width="5" height="10" fill="#F9AE18" rx="2"/>
+<line x1="378.0" y1="604.0" x2="378.0" y2="614.0" stroke="#64748b" stroke-width="2" stroke-linecap="round"/>
+<circle cx="378.0" cy="609.0" r="2.5" fill="#64748b"/>
+<text x="466.0" y="602.0" class="score-label" fill="#F9AE18" text-anchor="middle">87%</text>
+<text x="378.0" y="602.0" class="score-label" fill="#64748b" text-anchor="middle">60%</text>
+<text x="520" y="612.5" class="delta-label" fill="#16a34a">+27%</text>
+<line x1="750.0" y1="98" x2="750.0" y2="634" stroke="#e2e8f0" stroke-width="1"/>
+<text x="750.0" y="94" class="axis-label" text-anchor="middle">0%</text>
+<line x1="832.5" y1="98" x2="832.5" y2="634" stroke="#e2e8f0" stroke-width="1"/>
+<text x="832.5" y="94" class="axis-label" text-anchor="middle">25%</text>
+<line x1="915.0" y1="98" x2="915.0" y2="634" stroke="#e2e8f0" stroke-width="1"/>
+<text x="915.0" y="94" class="axis-label" text-anchor="middle">50%</text>
+<line x1="997.5" y1="98" x2="997.5" y2="634" stroke="#e2e8f0" stroke-width="1"/>
+<text x="997.5" y="94" class="axis-label" text-anchor="middle">75%</text>
+<line x1="1080.0" y1="98" x2="1080.0" y2="634" stroke="#e2e8f0" stroke-width="1"/>
+<text x="1080.0" y="94" class="axis-label" text-anchor="middle">100%</text>
+<line x1="783.0" y1="104" x2="783.0" y2="634" stroke="#f1f5f9" stroke-width="0.5"/>
+<line x1="816.0" y1="104" x2="816.0" y2="634" stroke="#f1f5f9" stroke-width="0.5"/>
+<line x1="849.0" y1="104" x2="849.0" y2="634" stroke="#f1f5f9" stroke-width="0.5"/>
+<line x1="882.0" y1="104" x2="882.0" y2="634" stroke="#f1f5f9" stroke-width="0.5"/>
+<line x1="948.0" y1="104" x2="948.0" y2="634" stroke="#f1f5f9" stroke-width="0.5"/>
+<line x1="981.0" y1="104" x2="981.0" y2="634" stroke="#f1f5f9" stroke-width="0.5"/>
+<line x1="1014.0" y1="104" x2="1014.0" y2="634" stroke="#f1f5f9" stroke-width="0.5"/>
+<line x1="1047.0" y1="104" x2="1047.0" y2="634" stroke="#f1f5f9" stroke-width="0.5"/>
+<rect x="590" y="104" width="540" height="24" fill="#f8fafc" stroke="#e2e8f0" stroke-width="0.5" rx="3"/>
+<text x="598" y="120" class="cat-label">RAG / Retrieval</text>
+<rect x="750" y="130" width="330" height="22" fill="#fafbfc"/>
+<text x="742" y="144.5" class="task-label" text-anchor="end">Multimodal RAG</text>
+<rect x="904.0" y="136.0" width="176.0" height="10" fill="#bbf7d0" rx="2"/>
+<rect x="750.0" y="137.0" width="330.0" height="8" fill="#F9AE18" opacity="0.15" rx="2"/>
+<rect x="1075.0" y="136.0" width="5" height="10" fill="#F9AE18" rx="2"/>
+<line x1="904.0" y1="136.0" x2="904.0" y2="146.0" stroke="#64748b" stroke-width="2" stroke-linecap="round"/>
+<circle cx="904.0" cy="141.0" r="2.5" fill="#64748b"/>
+<text x="1080.0" y="134.0" class="score-label" fill="#F9AE18" text-anchor="middle">100%</text>
+<text x="904.0" y="134.0" class="score-label" fill="#64748b" text-anchor="middle">47%</text>
+<text x="1090" y="144.5" class="delta-label" fill="#16a34a">+53%</text>
+<text x="742" y="166.5" class="task-label" text-anchor="end">RAG Quality Evaluation</text>
+<rect x="882.0" y="158.0" width="154.0" height="10" fill="#bbf7d0" rx="2"/>
+<rect x="750.0" y="159.0" width="286.0" height="8" fill="#F9AE18" opacity="0.15" rx="2"/>
+<rect x="1031.0" y="158.0" width="5" height="10" fill="#F9AE18" rx="2"/>
+<line x1="882.0" y1="158.0" x2="882.0" y2="168.0" stroke="#64748b" stroke-width="2" stroke-linecap="round"/>
+<circle cx="882.0" cy="163.0" r="2.5" fill="#64748b"/>
+<text x="1036.0" y="156.0" class="score-label" fill="#F9AE18" text-anchor="middle">87%</text>
+<text x="882.0" y="156.0" class="score-label" fill="#64748b" text-anchor="middle">40%</text>
+<text x="1090" y="166.5" class="delta-label" fill="#16a34a">+47%</text>
+<rect x="750" y="174" width="330" height="22" fill="#fafbfc"/>
+<text x="742" y="188.5" class="task-label" text-anchor="end">Agentic RAG</text>
+<rect x="904.0" y="180.0" width="132.0" height="10" fill="#bbf7d0" rx="2"/>
+<rect x="750.0" y="181.0" width="286.0" height="8" fill="#F9AE18" opacity="0.15" rx="2"/>
+<rect x="1031.0" y="180.0" width="5" height="10" fill="#F9AE18" rx="2"/>
+<line x1="904.0" y1="180.0" x2="904.0" y2="190.0" stroke="#64748b" stroke-width="2" stroke-linecap="round"/>
+<circle cx="904.0" cy="185.0" r="2.5" fill="#64748b"/>
+<text x="1036.0" y="178.0" class="score-label" fill="#F9AE18" text-anchor="middle">87%</text>
+<text x="904.0" y="178.0" class="score-label" fill="#64748b" text-anchor="middle">47%</text>
+<text x="1090" y="188.5" class="delta-label" fill="#16a34a">+40%</text>
+<rect x="590" y="206" width="540" height="24" fill="#f8fafc" stroke="#e2e8f0" stroke-width="0.5" rx="3"/>
+<text x="598" y="222" class="cat-label">Architecture</text>
+<text x="742" y="246.5" class="task-label" text-anchor="end">Model Merging</text>
+<rect x="926.0" y="238.0" width="132.0" height="10" fill="#bbf7d0" rx="2"/>
+<rect x="750.0" y="239.0" width="308.0" height="8" fill="#F9AE18" opacity="0.15" rx="2"/>
+<rect x="1053.0" y="238.0" width="5" height="10" fill="#F9AE18" rx="2"/>
+<line x1="926.0" y1="238.0" x2="926.0" y2="248.0" stroke="#64748b" stroke-width="2" stroke-linecap="round"/>
+<circle cx="926.0" cy="243.0" r="2.5" fill="#64748b"/>
+<text x="1058.0" y="236.0" class="score-label" fill="#F9AE18" text-anchor="middle">93%</text>
+<text x="926.0" y="236.0" class="score-label" fill="#64748b" text-anchor="middle">53%</text>
+<text x="1090" y="246.5" class="delta-label" fill="#16a34a">+40%</text>
+<rect x="750" y="254" width="330" height="22" fill="#fafbfc"/>
+<text x="742" y="268.5" class="task-label" text-anchor="end">Embedding Search at Scale</text>
+<rect x="948.0" y="260.0" width="110.0" height="10" fill="#bbf7d0" rx="2"/>
+<rect x="750.0" y="261.0" width="308.0" height="8" fill="#F9AE18" opacity="0.15" rx="2"/>
+<rect x="1053.0" y="260.0" width="5" height="10" fill="#F9AE18" rx="2"/>
+<line x1="948.0" y1="260.0" x2="948.0" y2="270.0" stroke="#64748b" stroke-width="2" stroke-linecap="round"/>
+<circle cx="948.0" cy="265.0" r="2.5" fill="#64748b"/>
+<text x="1058.0" y="258.0" class="score-label" fill="#F9AE18" text-anchor="middle">93%</text>
+<text x="948.0" y="258.0" class="score-label" fill="#64748b" text-anchor="middle">60%</text>
+<text x="1090" y="268.5" class="delta-label" fill="#16a34a">+33%</text>
+<text x="742" y="290.5" class="task-label" text-anchor="end">LLM A/B Testing</text>
+<rect x="926.0" y="282.0" width="88.0" height="10" fill="#bbf7d0" rx="2"/>
+<rect x="750.0" y="283.0" width="264.0" height="8" fill="#F9AE18" opacity="0.15" rx="2"/>
+<rect x="1009.0" y="282.0" width="5" height="10" fill="#F9AE18" rx="2"/>
+<line x1="926.0" y1="282.0" x2="926.0" y2="292.0" stroke="#64748b" stroke-width="2" stroke-linecap="round"/>
+<circle cx="926.0" cy="287.0" r="2.5" fill="#64748b"/>
+<text x="1014.0" y="280.0" class="score-label" fill="#F9AE18" text-anchor="middle">80%</text>
+<text x="926.0" y="280.0" class="score-label" fill="#64748b" text-anchor="middle">53%</text>
+<text x="1090" y="290.5" class="delta-label" fill="#16a34a">+27%</text>
+<rect x="750" y="298" width="330" height="22" fill="#fafbfc"/>
+<text x="742" y="312.5" class="task-label" text-anchor="end">DSPy Prompt Tuning</text>
+<rect x="948.0" y="304.0" width="66.0" height="10" fill="#bbf7d0" rx="2"/>
+<rect x="750.0" y="305.0" width="264.0" height="8" fill="#F9AE18" opacity="0.15" rx="2"/>
+<rect x="1009.0" y="304.0" width="5" height="10" fill="#F9AE18" rx="2"/>
+<line x1="948.0" y1="304.0" x2="948.0" y2="314.0" stroke="#64748b" stroke-width="2" stroke-linecap="round"/>
+<circle cx="948.0" cy="309.0" r="2.5" fill="#64748b"/>
+<text x="1014.0" y="302.0" class="score-label" fill="#F9AE18" text-anchor="middle">80%</text>
+<text x="948.0" y="302.0" class="score-label" fill="#64748b" text-anchor="middle">60%</text>
+<text x="1090" y="312.5" class="delta-label" fill="#16a34a">+20%</text>
+<text x="742" y="334.5" class="task-label" text-anchor="end">Safety Guardrails</text>
+<rect x="948.0" y="326.0" width="66.0" height="10" fill="#bbf7d0" rx="2"/>
+<rect x="750.0" y="327.0" width="264.0" height="8" fill="#F9AE18" opacity="0.15" rx="2"/>
+<rect x="1009.0" y="326.0" width="5" height="10" fill="#F9AE18" rx="2"/>
+<line x1="948.0" y1="326.0" x2="948.0" y2="336.0" stroke="#64748b" stroke-width="2" stroke-linecap="round"/>
+<circle cx="948.0" cy="331.0" r="2.5" fill="#64748b"/>
+<text x="1014.0" y="324.0" class="score-label" fill="#F9AE18" text-anchor="middle">80%</text>
+<text x="948.0" y="324.0" class="score-label" fill="#64748b" text-anchor="middle">60%</text>
+<text x="1090" y="334.5" class="delta-label" fill="#16a34a">+20%</text>
+<rect x="750" y="342" width="330" height="22" fill="#fafbfc"/>
+<text x="742" y="356.5" class="task-label" text-anchor="end">Structured Output</text>
+<rect x="970.0" y="348.0" width="22.0" height="10" fill="#bbf7d0" rx="2"/>
+<rect x="750.0" y="349.0" width="242.0" height="8" fill="#F9AE18" opacity="0.15" rx="2"/>
+<rect x="987.0" y="348.0" width="5" height="10" fill="#F9AE18" rx="2"/>
+<line x1="970.0" y1="348.0" x2="970.0" y2="358.0" stroke="#64748b" stroke-width="2" stroke-linecap="round"/>
+<circle cx="970.0" cy="353.0" r="2.5" fill="#64748b"/>
+<text x="992.0" y="346.0" class="score-label" fill="#F9AE18" text-anchor="middle">73%</text>
+<text x="1090" y="356.5" class="delta-label" fill="#16a34a">+6%</text>
+<text x="742" y="378.5" class="task-label" text-anchor="end">LLM-as-Judge Eval</text>
+<rect x="970.0" y="370.0" width="22.0" height="10" fill="#bbf7d0" rx="2"/>
+<rect x="750.0" y="371.0" width="242.0" height="8" fill="#F9AE18" opacity="0.15" rx="2"/>
+<rect x="987.0" y="370.0" width="5" height="10" fill="#F9AE18" rx="2"/>
+<line x1="970.0" y1="370.0" x2="970.0" y2="380.0" stroke="#64748b" stroke-width="2" stroke-linecap="round"/>
+<circle cx="970.0" cy="375.0" r="2.5" fill="#64748b"/>
+<text x="992.0" y="368.0" class="score-label" fill="#F9AE18" text-anchor="middle">73%</text>
+<text x="1090" y="378.5" class="delta-label" fill="#16a34a">+6%</text>
+<rect x="590" y="396" width="540" height="24" fill="#f8fafc" stroke="#e2e8f0" stroke-width="0.5" rx="3"/>
+<text x="598" y="412" class="cat-label">Agent Tasks</text>
+<rect x="750" y="422" width="330" height="22" fill="#fafbfc"/>
+<text x="742" y="436.5" class="task-label" text-anchor="end">Expert Agent Delegation</text>
+<rect x="904.0" y="428.0" width="176.0" height="10" fill="#bbf7d0" rx="2"/>
+<rect x="750.0" y="429.0" width="330.0" height="8" fill="#F9AE18" opacity="0.15" rx="2"/>
+<rect x="1075.0" y="428.0" width="5" height="10" fill="#F9AE18" rx="2"/>
+<line x1="904.0" y1="428.0" x2="904.0" y2="438.0" stroke="#64748b" stroke-width="2" stroke-linecap="round"/>
+<circle cx="904.0" cy="433.0" r="2.5" fill="#64748b"/>
+<text x="1080.0" y="426.0" class="score-label" fill="#F9AE18" text-anchor="middle">100%</text>
+<text x="904.0" y="426.0" class="score-label" fill="#64748b" text-anchor="middle">47%</text>
+<text x="1090" y="436.5" class="delta-label" fill="#16a34a">+53%</text>
+<text x="742" y="458.5" class="task-label" text-anchor="end">Pipeline Audit</text>
+<rect x="970.0" y="450.0" width="88.0" height="10" fill="#bbf7d0" rx="2"/>
+<rect x="750.0" y="451.0" width="308.0" height="8" fill="#F9AE18" opacity="0.15" rx="2"/>
+<rect x="1053.0" y="450.0" width="5" height="10" fill="#F9AE18" rx="2"/>
+<line x1="970.0" y1="450.0" x2="970.0" y2="460.0" stroke="#64748b" stroke-width="2" stroke-linecap="round"/>
+<circle cx="970.0" cy="455.0" r="2.5" fill="#64748b"/>
+<text x="1058.0" y="448.0" class="score-label" fill="#F9AE18" text-anchor="middle">93%</text>
+<text x="970.0" y="448.0" class="score-label" fill="#64748b" text-anchor="middle">67%</text>
+<text x="1090" y="458.5" class="delta-label" fill="#16a34a">+26%</text>
+<rect x="750" y="466" width="330" height="22" fill="#fafbfc"/>
+<text x="742" y="480.5" class="task-label" text-anchor="end">Data Analysis Agent</text>
+<rect x="948.0" y="472.0" width="22.0" height="10" fill="#bbf7d0" rx="2"/>
+<rect x="750.0" y="473.0" width="220.0" height="8" fill="#F9AE18" opacity="0.15" rx="2"/>
+<rect x="965.0" y="472.0" width="5" height="10" fill="#F9AE18" rx="2"/>
+<line x1="948.0" y1="472.0" x2="948.0" y2="482.0" stroke="#64748b" stroke-width="2" stroke-linecap="round"/>
+<circle cx="948.0" cy="477.0" r="2.5" fill="#64748b"/>
+<text x="970.0" y="470.0" class="score-label" fill="#F9AE18" text-anchor="middle">67%</text>
+<text x="1090" y="480.5" class="delta-label" fill="#16a34a">+7%</text>
+<text x="742" y="502.5" class="task-label" text-anchor="end">Multi-agent Routing</text>
+<rect x="926.0" y="494.0" width="22.0" height="10" fill="#fecaca" rx="2"/>
+<rect x="750.0" y="495.0" width="176.0" height="8" fill="#F9AE18" opacity="0.15" rx="2"/>
+<rect x="921.0" y="494.0" width="5" height="10" fill="#F9AE18" rx="2"/>
+<line x1="948.0" y1="494.0" x2="948.0" y2="504.0" stroke="#64748b" stroke-width="2" stroke-linecap="round"/>
+<circle cx="948.0" cy="499.0" r="2.5" fill="#64748b"/>
+<text x="926.0" y="492.0" class="score-label" fill="#F9AE18" text-anchor="middle">53%</text>
+<text x="1090" y="502.5" class="delta-label" fill="#dc2626">-7%</text>
+<rect x="590" y="520" width="540" height="24" fill="#f8fafc" stroke="#e2e8f0" stroke-width="0.5" rx="3"/>
+<text x="598" y="536" class="cat-label">Negative Controls</text>
+<rect x="750" y="546" width="330" height="22" fill="#fafbfc"/>
+<text x="742" y="560.5" class="task-label" text-anchor="end">CI/CD Pipeline</text>
+<rect x="948.0" y="552.0" width="44.0" height="10" fill="#bbf7d0" rx="2"/>
+<rect x="750.0" y="553.0" width="242.0" height="8" fill="#F9AE18" opacity="0.15" rx="2"/>
+<rect x="987.0" y="552.0" width="5" height="10" fill="#F9AE18" rx="2"/>
+<line x1="948.0" y1="552.0" x2="948.0" y2="562.0" stroke="#64748b" stroke-width="2" stroke-linecap="round"/>
+<circle cx="948.0" cy="557.0" r="2.5" fill="#64748b"/>
+<text x="992.0" y="550.0" class="score-label" fill="#F9AE18" text-anchor="middle">73%</text>
+<text x="948.0" y="550.0" class="score-label" fill="#64748b" text-anchor="middle">60%</text>
+<text x="1090" y="560.5" class="delta-label" fill="#16a34a">+13%</text>
+<text x="742" y="582.5" class="task-label" text-anchor="end">Merge Sorted Lists</text>
+<rect x="882.0" y="574.0" width="22.0" height="10" fill="#bbf7d0" rx="2"/>
+<rect x="750.0" y="575.0" width="154.0" height="8" fill="#F9AE18" opacity="0.15" rx="2"/>
+<rect x="899.0" y="574.0" width="5" height="10" fill="#F9AE18" rx="2"/>
+<line x1="882.0" y1="574.0" x2="882.0" y2="584.0" stroke="#64748b" stroke-width="2" stroke-linecap="round"/>
+<circle cx="882.0" cy="579.0" r="2.5" fill="#64748b"/>
+<text x="904.0" y="572.0" class="score-label" fill="#F9AE18" text-anchor="middle">47%</text>
+<text x="1090" y="582.5" class="delta-label" fill="#16a34a">+7%</text>
+<rect x="750" y="590" width="330" height="22" fill="#fafbfc"/>
+<text x="742" y="604.5" class="task-label" text-anchor="end">Trie Autocomplete</text>
+<rect x="882.0" y="596.0" width="22.0" height="10" fill="#fecaca" rx="2"/>
+<rect x="750.0" y="597.0" width="132.0" height="8" fill="#F9AE18" opacity="0.15" rx="2"/>
+<rect x="877.0" y="596.0" width="5" height="10" fill="#F9AE18" rx="2"/>
+<line x1="904.0" y1="596.0" x2="904.0" y2="606.0" stroke="#64748b" stroke-width="2" stroke-linecap="round"/>
+<circle cx="904.0" cy="601.0" r="2.5" fill="#64748b"/>
+<text x="882.0" y="594.0" class="score-label" fill="#F9AE18" text-anchor="middle">40%</text>
+<text x="1090" y="604.5" class="delta-label" fill="#dc2626">-7%</text>
+<text x="742" y="626.5" class="task-label" text-anchor="end">REST API (FastAPI)</text>
+<rect x="882.0" y="618.0" width="66.0" height="10" fill="#fecaca" rx="2"/>
+<rect x="750.0" y="619.0" width="132.0" height="8" fill="#F9AE18" opacity="0.15" rx="2"/>
+<rect x="877.0" y="618.0" width="5" height="10" fill="#F9AE18" rx="2"/>
+<line x1="948.0" y1="618.0" x2="948.0" y2="628.0" stroke="#64748b" stroke-width="2" stroke-linecap="round"/>
+<circle cx="948.0" cy="623.0" r="2.5" fill="#64748b"/>
+<text x="882.0" y="616.0" class="score-label" fill="#F9AE18" text-anchor="middle">40%</text>
+<text x="948.0" y="616.0" class="score-label" fill="#64748b" text-anchor="middle">60%</text>
+<text x="1090" y="626.5" class="delta-label" fill="#dc2626">-20%</text>
+</svg>

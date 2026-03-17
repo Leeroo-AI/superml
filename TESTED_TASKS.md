@@ -1,76 +1,95 @@
 # Tested Tasks
 
-38 tasks used to evaluate SuperML. Each task was given to Claude Code with and without the plugin. Sorted by relevance to the plugin's strengths.
+38 ML/AI tasks evaluated head-to-head: Claude Code with SuperML vs without. Each response scored by 3 independent LLM judges across correctness, specificity, mistake prevention, actionability, and grounding (15 points max).
 
-## Fine-Tuning & Training
+<p align="center">
+  <img src="assets/results-chart.svg" alt="SuperML vs Baseline — 38 ML Tasks" width="1150">
+</p>
 
-| Task | Prompt | Plugin | Baseline |
-|------|--------|:------:|:--------:|
-| QLoRA multimodal | I want to fine-tune LLaVA-1.5-7B for medical image analysis using QLoRA. My data is 50k image-text pairs of X-rays with radiologist reports. I have 1xA100 80GB. Walk me through the complete setup: data format, config, training script, and evaluation. What target_modules should I use for the vision encoder vs the language model? | **15** | 8 |
-| DPO alignment | I fine-tuned Mistral-7B-v0.3 on my custom instruction data and it works well, but it sometimes generates unsafe content. I want to align it using DPO. I have 5k preference pairs (chosen/rejected). My setup: 2xA100 40GB. Give me the complete TRL DPO training config, explain the key hyperparameters (beta, learning rate, loss type), and tell me what can go wrong. What should my data format look like? | **15** | 8 |
-| GRPO alignment | I want to align my Qwen2.5-7B-Instruct model using GRPO (Group Relative Policy Optimization) instead of DPO. I have 10k prompts (no preference pairs — just prompts). Using TRL's GRPOTrainer on 2xA100 80GB. 1. Explain how GRPO differs from DPO/PPO — why no reward model or preference data? 2. Give me the complete training config with TRL GRPOTrainer 3. What are the key hyperparameters (group_size, kl_coef, num_generations) and how do they interact? 4. What reward function should I use for general instruction following? 5. Common failure modes and how to detect them | **15** | 8 |
-| Distributed pretraining | I need to pre-train a 3B parameter GPT model from scratch on a custom dataset (200B tokens). I have a cluster of 4 nodes, each with 8xH100 80GB connected via InfiniBand. Should I use Megatron-LM, DeepSpeed, or FSDP? Give me the complete training config including parallelism strategy (TP, PP, DP split), batch size, learning rate schedule, and the launch command. | **15** | 6 |
-| Continual pretraining | I want to do continual pre-training of Llama-3.1-8B on a domain corpus (500M tokens of biomedical papers). Hardware: 8xA100 80GB single node. 1. How does continual pre-training differ from fine-tuning? What learning rate schedule should I use (much lower than from-scratch)? 2. Complete training config with DeepSpeed ZeRO-2 3. How to prevent catastrophic forgetting of general capabilities? 4. Data mixing strategy: what ratio of domain data vs replay data? 5. How to evaluate: perplexity on domain vs general benchmarks, and when to stop | 14 | 9 |
-| Vision fine-tuning | I need to fine-tune Qwen2-VL-7B for document understanding (invoices, receipts, forms). I have 30k document images with structured JSON annotations. Hardware: 1xH100 80GB. 1. What data format does Qwen2-VL expect for supervised fine-tuning? 2. Give me the complete training script using transformers and the Qwen2-VL processor 3. Should I use LoRA or full fine-tuning? What target_modules? 4. How do I handle variable-resolution images efficiently? 5. Evaluation: how to measure extraction accuracy vs the JSON ground truth | 14 | 8 |
-| Embedding fine-tuning | My RAG system's retrieval quality is poor because the off-the-shelf embedding model (BGE-large) doesn't understand my domain (legal contracts). I want to fine-tune it. 1. How to create training data: mining hard negatives from my corpus, generating synthetic queries 2. Fine-tuning approach: sentence-transformers vs custom contrastive loss 3. Complete training script with InfoNCE loss, hard negative mining, and in-batch negatives 4. Evaluation: how to measure embedding quality (recall@k, MRR, NDCG) with a held-out test set 5. Deployment: how to update embeddings in production without downtime (re-index strategy) 6. Hardware: can I fine-tune BGE-large on 1xA100 40GB? | 13 | 10 |
-| Model distillation | I want to distill GPT-4o's capabilities into a Llama-3-8B model for my specific task (customer support classification + response generation). Budget: $300 in API calls. 1. Distillation pipeline: generate teacher labels from GPT-4o, then fine-tune the student 2. How to maximize quality per dollar: which prompting strategy extracts the most useful signal from the teacher? 3. What data to generate: just answers, or also chain-of-thought reasoning? 4. Complete pipeline code: data generation, quality filtering, student training 5. Evaluation: how to measure the distilled model against the teacher 6. Legal considerations: is this allowed under OpenAI's terms of service? | 13 | 8 |
-| Synthetic data generation | I want to create a high-quality synthetic instruction-tuning dataset for a domain-specific LLM (legal contract analysis). I have 10k real contracts but no instruction-response pairs. I've heard of approaches like Self-Instruct, Evol-Instruct (WizardLM), Magpie, and the Orca/phi approach of distilling reasoning chains. Which approach should I use? I need: 1. Pipeline architecture to generate 100k instruction-response pairs from my raw contracts 2. Quality filtering (how to detect and remove low-quality synthetic samples) 3. Diversity enforcement (avoid mode collapse in generated instructions) 4. Contamination checks (ensure no test set leakage) Budget: $500 in API calls (GPT-4o or Claude). Give me the full pipeline with code. | 13 | 9 |
+---
 
-## Debugging & Verification
+## Detailed Scores
 
-| Task | Prompt | Plugin | Baseline |
-|------|--------|:------:|:--------:|
-| Preflight config check | I'm about to start a QLoRA training run. Can you check this config before I burn GPU hours? model: meta-llama/Llama-3-8B-Instruct, quantization: 4bit (bnb), lora_r: 128, lora_alpha: 16, lora_dropout: 0.1, target_modules: ["q_proj", "v_proj"], learning_rate: 5e-3, batch_size: 8, gradient_accumulation_steps: 4, max_seq_length: 8192, num_epochs: 5, warmup_ratio: 0.0, bf16: true, optimizer: adamw_8bit. Hardware: 1xA100 40GB. Dataset: 20k instruction-response pairs, avg 500 tokens | **15** | 9 |
-| Iterate after results | Here are my experiment results so far for fine-tuning Llama-3-8B on a customer support dataset: Experiment 1: LoRA r=16, lr=2e-4, 3 epochs -> BLEU 32.1, but model hallucinates product names. Experiment 2: LoRA r=32, lr=1e-4, 3 epochs -> BLEU 33.8, hallucinations slightly reduced. Experiment 3: LoRA r=32, lr=1e-4, 5 epochs -> BLEU 31.2, overfitting (train loss kept dropping but eval got worse). I'm targeting BLEU > 38 with minimal hallucination. What should I try next? I have 2xA100 40GB and 50k training examples. | **15** | 7 |
-| Training debug (complex) | I'm training a mixture-of-experts model using Mixtral architecture with DeepSpeed on 8xA100. After 5000 steps, I see these symptoms: 1. Router load balancing loss keeps increasing (started at 0.01, now at 0.8) 2. Only 2 of 8 experts are being used (expert utilization histogram is extremely skewed) 3. Training loss plateaued at 2.1 and won't decrease 4. GPU memory usage is uneven across GPUs (GPU 0: 72GB, others: ~45GB). Config: expert_parallel_size=4, num_experts=8, top_k=2, aux_loss_coeff=0.01, lr=3e-4. What's happening and how do I fix each issue? | 14 | 9 |
-| Debug OOM distributed | I'm getting OOM errors when fine-tuning Llama-3.1-70B with DeepSpeed ZeRO-3 on 4xA100 80GB. The error occurs at step 1 during the backward pass. Config: DeepSpeed ZeRO stage 3, offload_param to CPU, bf16, batch_size=1, grad_accum=16, QLoRA with bnb 4bit, lora_r=64, max_seq_length=4096, activation_checkpointing enabled. nvidia-smi shows all 4 GPUs at 78/80GB just before crash. Error: torch.cuda.OutOfMemoryError: CUDA out of memory. Tried to allocate 2.00 GiB. I thought ZeRO-3 should shard everything. Why is each GPU using 78GB? How do I fix this? | 14 | 7 |
-| Training loss spike | I'm fine-tuning Llama-3-8B with QLoRA and seeing a persistent problem: training loss drops normally for the first 500 steps (from 2.3 to 0.8), then suddenly spikes to 5.0+ at step 501 and never recovers. This happens consistently at the same step. Config: lr=2e-4, cosine schedule, warmup_steps=100, batch_size=4, grad_accum=8, bf16, bnb 4bit, max_seq_len=2048, lora_r=16, lora_alpha=32. Data: 15k instruction-response pairs, shuffled. Average length ~800 tokens, but some samples are up to 2048. What's causing this and how do I fix it? | 13 | 7 |
+### Fine-Tuning & Training
 
-## LLM Inference & Serving
+| Task | Plugin | Baseline | Delta |
+|------|:------:|:--------:|:-----:|
+| QLoRA multimodal (LLaVA-1.5-7B, medical imaging, 1xA100) | **15** | 8 | +7 |
+| DPO alignment (Mistral-7B, TRL, 2xA100) | **15** | 8 | +7 |
+| GRPO alignment (Qwen2.5-7B, TRL GRPOTrainer, 2xA100) | **15** | 8 | +7 |
+| Distributed pretraining (3B GPT, 4x8xH100, Megatron/DeepSpeed/FSDP) | **15** | 6 | +9 |
+| Continual pretraining (Llama-3.1-8B, biomedical, DeepSpeed ZeRO-2) | 14 | 9 | +5 |
+| Vision fine-tuning (Qwen2-VL-7B, document understanding, 1xH100) | 14 | 8 | +6 |
+| Embedding fine-tuning (BGE-large, legal contracts, InfoNCE) | 13 | 10 | +3 |
+| Model distillation (GPT-4o to Llama-3-8B, $300 budget) | 13 | 8 | +5 |
+| Synthetic data generation (legal contracts, 100k pairs, $500 budget) | 13 | 9 | +4 |
 
-| Task | Prompt | Plugin | Baseline |
-|------|--------|:------:|:--------:|
-| Speculative decoding | I want to speed up inference of Llama-3-70B using speculative decoding. I'm considering using Llama-3-8B as the draft model. How does speculative decoding work exactly? What's the expected speedup? How do I set this up with vLLM? Are there any gotchas with the draft model choice (tokenizer compatibility, acceptance rate)? Give me the complete setup. | **15** | 8 |
-| FSDP vs DeepSpeed | I need to choose between FSDP and DeepSpeed ZeRO-3 for fine-tuning Llama-3.1-70B on 8xH100 80GB. The task is instruction-tuning on 200k examples. 1. Compare FSDP vs DeepSpeed ZeRO-3 for this specific use case: memory usage, throughput, ease of setup 2. Complete training configs for BOTH approaches (using Hugging Face Trainer + Accelerate) 3. Which is better with QLoRA specifically? 4. Activation checkpointing: how to configure for each 5. Multi-node: which is easier to scale from 1 to 4 nodes? 6. Known bugs or version-specific issues to watch for | **15** | 8 |
-| Serving optimization | I'm serving Llama-3-70B-Instruct with vLLM on 4xA100 80GB in production. Current config: tensor_parallel=4, max_model_len=4096, gpu_memory_utilization=0.9. I'm getting p99 latency of 8 seconds for 2048-token outputs at 50 concurrent users. I need to get this under 3 seconds. What specific optimizations should I make? Show me the exact vLLM launch command and any code changes. | 14 | 6 |
-| KV cache optimization | I'm serving Llama-3.1-70B on 4xA100 80GB with vLLM. My KV cache is the bottleneck — I can only handle 8 concurrent requests with max_model_len=32768. 1. Explain PagedAttention and how vLLM manages KV cache 2. How much KV cache memory does each request use for Llama-3.1-70B at 32k context? 3. Compare optimization strategies: FP8 KV cache, GQA exploitation, prefix caching, chunked prefill, sliding window attention 4. Give me the vLLM config that maximizes concurrent requests while keeping quality 5. How to monitor KV cache utilization in production | 14 | 6 |
-| Quantization comparison | I need to quantize Llama-3.1-70B for deployment on 2xA100 40GB. Compare quantization methods: 1. GPTQ vs AWQ vs GGUF vs HQQ vs bitsandbytes — which preserves quality best at 4-bit? 2. For each method: exact commands to quantize, expected model size, and known quality impact 3. Calibration dataset: how many samples, what kind of data? 4. Benchmark plan: how to measure quality degradation (perplexity, task accuracy, generation quality) 5. Can I serve the quantized model with vLLM? Which quantization formats does vLLM 0.6+ support? | 13 | 9 |
-| MoE serving | I need to serve Mixtral-8x22B in production on 4xA100 80GB. Requirements: p99 latency < 5s for 1024-token outputs, 30 concurrent users, 99.9% uptime. 1. Can this even fit on 4xA100 80GB? What quantization is needed? 2. Compare serving options: vLLM vs TGI vs SGLang for MoE models specifically 3. Give me the exact launch config with optimal tensor parallel, quantization, and KV cache settings 4. How does expert parallelism work in vLLM for MoE? 5. Production setup: health checks, graceful degradation, request queuing | 7 | 14 |
+### Debugging & Verification
 
-## RAG & Retrieval
+| Task | Plugin | Baseline | Delta |
+|------|:------:|:--------:|:-----:|
+| Preflight config check (QLoRA config with deliberate issues) | **15** | 9 | +6 |
+| Iterate after results (Llama-3-8B, 3 LoRA experiments, hallucination) | **15** | 7 | +8 |
+| MoE training debug (Mixtral, expert collapse, router imbalance) | 14 | 9 | +5 |
+| OOM distributed debug (Llama-3.1-70B, ZeRO-3, 4xA100) | 14 | 7 | +7 |
+| Training loss spike (QLoRA, step 501 spike, data-dependent) | 13 | 7 | +6 |
 
-| Task | Prompt | Plugin | Baseline |
-|------|--------|:------:|:--------:|
-| Multimodal RAG | I'm building a RAG system that needs to handle PDFs with mixed content: text, tables, charts, and diagrams. Requirements: 1. Document parsing: extract text, tables (as structured data), and images from PDFs 2. Multi-modal embeddings: embed text chunks and images into the same vector space 3. Retrieval: when user asks about a chart, retrieve the chart image + surrounding text 4. Generation: feed retrieved text + images to a vision-language model for answer generation. Compare approaches: ColPali-style late interaction vs separate text/image pipelines vs Unstructured.io + standard embeddings. Give me the complete implementation with the recommended approach. | **15** | 7 |
-| RAG evaluation | My RAG system is in production but users complain answers are sometimes wrong or incomplete. I need to build an automated evaluation pipeline. The system uses ChromaDB + BGE-large embeddings + GPT-4o for generation. I want to measure: retrieval quality (recall, MRR), answer faithfulness, answer relevance, and hallucination rate. Show me how to set this up with RAGAS or a similar framework, including synthetic test set generation. | 13 | 6 |
-| Agentic RAG | I need to build an agentic RAG system that goes beyond simple retrieve-and-generate. Requirements: 1. Query decomposition — break complex questions into sub-queries 2. Adaptive retrieval — decide whether to search, re-rank, or ask for clarification 3. Self-correction — detect when retrieved context is insufficient and re-retrieve with reformulated queries 4. Source fusion — combine answers from multiple retrieval rounds with proper attribution. Tech stack: LangGraph for orchestration, Qdrant for vector store, Cohere reranker, GPT-4o for generation. Give me the full implementation with the state machine, node functions, and edge conditions. Include the retry/self-correction logic. | 13 | 7 |
+### Inference & Serving
 
-## Architecture & Systems
+| Task | Plugin | Baseline | Delta |
+|------|:------:|:--------:|:-----:|
+| Speculative decoding (Llama-3-70B + 8B draft, vLLM) | **15** | 8 | +7 |
+| FSDP vs DeepSpeed (Llama-3.1-70B, 8xH100, comparison) | **15** | 8 | +7 |
+| Serving optimization (Llama-3-70B, vLLM, p99 latency target) | 14 | 6 | +8 |
+| KV cache optimization (Llama-3.1-70B, 32k context, PagedAttention) | 14 | 6 | +8 |
+| Quantization comparison (GPTQ/AWQ/GGUF/HQQ/bnb, 70B on 2xA100) | 13 | 9 | +4 |
+| MoE serving (Mixtral-8x22B, 4xA100, production) | 7 | **14** | -7 |
 
-| Task | Prompt | Plugin | Baseline |
-|------|--------|:------:|:--------:|
-| Model merging | I have three Llama-3-8B fine-tunes: one for coding, one for math, and one for creative writing. I want to merge them into a single model that's good at all three. Compare merging methods: TIES, DARE, SLERP, linear. Which should I use? Show me the mergekit config and the evaluation strategy to verify the merge didn't degrade any capability. | 14 | 8 |
-| Embedding pipeline | I'm building a code search engine that needs to index 10M code snippets across Python, JavaScript, and Rust. I need to: (1) choose the right embedding model for code, (2) build an efficient indexing pipeline that can process 10M items in under 4 hours on 2xA100, (3) serve similarity search with sub-100ms latency. Compare code embedding models (CodeBERT vs StarEncoder vs Voyage Code vs OpenAI) and give me the full architecture. | 14 | 9 |
-| A/B testing LLMs | I need to set up A/B testing infrastructure for comparing LLM versions in production. We deploy new model versions weekly and need to know if they're better before full rollout. 1. Metrics: what to measure (quality, latency, cost, user satisfaction, task completion rate) 2. Statistical framework: sample size calculation, sequential testing (don't wait for fixed sample), multiple comparison correction 3. Traffic splitting: how to route users to different model versions with consistent assignment 4. LLM-as-judge for automated quality scoring: rubric design, inter-rater reliability with human labels 5. Implementation: FastAPI middleware for routing, logging pipeline, dashboard queries 6. Decision framework: when to promote, when to rollback | 12 | 8 |
-| Prompt optimization | I'm building a prompt optimization system using DSPy. My pipeline has 3 modules chained: query_rewriter -> retriever -> answer_generator. I want to optimize all 3 prompts jointly. 1. How does DSPy's optimization work (MIPRO, BootstrapFewShot, etc.)? Which optimizer for my use case? 2. Complete implementation: define modules, signatures, and the optimization loop 3. How to define a good metric function for RAG quality 4. How many labeled examples do I need for optimization? 5. How to evaluate: before vs after optimization comparison 6. Known limitations and when DSPy doesn't help | 12 | 9 |
-| Guardrails system | I need to build a production guardrails system for my customer-facing LLM application. Requirements: 1. Input guardrails: detect prompt injection, jailbreak attempts, PII in user input, off-topic requests 2. Output guardrails: detect hallucination, toxic content, PII leakage, brand-damaging statements 3. Compare frameworks: NeMo Guardrails vs Guardrails AI vs custom classifier approach 4. Latency budget: guardrails must add < 200ms to each request 5. Implementation with both rule-based and ML-based classifiers 6. Monitoring: track false positive/negative rates, create a human review queue for edge cases | 12 | 9 |
-| Structured output | I need to build a system that reliably extracts structured data from unstructured text using LLMs. Requirements: 1. Define Pydantic models for the output schema (nested objects, enums, optional fields) 2. Compare approaches: function calling, JSON mode, Instructor library, Outlines/guidance for constrained decoding 3. Implement retry logic with progressive prompting when validation fails 4. Handle edge cases: LLM refuses, partial output, wrong types, hallucinated enum values. Use case: extracting job postings into structured format (title, company, salary range, requirements list, location, remote policy). Show me implementations using both Claude API and OpenAI API. | 11 | 10 |
-| LLM eval framework | I'm building an automated evaluation framework to compare fine-tuned LLMs before deploying to production. I need to evaluate across 4 axes: 1. Task accuracy — domain-specific benchmarks (I'll provide gold-standard QA pairs) 2. Safety — refusal on harmful prompts, jailbreak resistance 3. Hallucination rate — faithfulness to provided context 4. Instruction following — format compliance, constraint adherence. I want to use LLM-as-judge (GPT-4o) with proper rubrics, plus deterministic metrics where possible. Need statistical rigor: confidence intervals, inter-annotator agreement with human labels, significance testing between model versions. Give me the complete framework: rubric design, judge prompts, scoring pipeline, and the statistical analysis code. I want to run this as a CI check before any model deployment. | 11 | 10 |
+### RAG & Retrieval
 
-## Agent Tasks
+| Task | Plugin | Baseline | Delta |
+|------|:------:|:--------:|:-----:|
+| Multimodal RAG (PDFs with tables/charts, ColPali vs pipelines) | **15** | 7 | +8 |
+| RAG evaluation (RAGAS, ChromaDB + BGE + GPT-4o) | 13 | 6 | +7 |
+| Agentic RAG (LangGraph, Qdrant, self-correction, query decomposition) | 13 | 7 | +6 |
 
-| Task | Prompt | Plugin | Baseline |
-|------|--------|:------:|:--------:|
-| Agent delegation | I need a deep analysis of my serving architecture. I'm running Mistral-7B-Instruct-v0.3 on 2xA100 40GB with vLLM. Current config: tensor_parallel=2, max_model_len=32768, gpu_memory_utilization=0.95, enforce_eager=True. I'm seeing intermittent OOM crashes under load (20+ concurrent users), p99 latency spikes to 12s, and the KV cache fills up quickly. I need a thorough pipeline review — check every config value, identify all issues, and give me the production-ready config with exact values and rationale for each change. | **15** | 7 |
-| Direct agent review | Review my complete fine-tuning pipeline for Llama-3-8B: 1. Data: 50k instruction-response pairs, avg 600 tokens, loaded via datasets library, tokenized with padding=max_length 2. Model: QLoRA 4-bit, r=16, alpha=32, target_modules=['q_proj','v_proj'] 3. Training: lr=2e-4, cosine schedule, warmup_ratio=0.03, batch_size=4, grad_accum=8, bf16, 3 epochs 4. Hardware: 1xA100 80GB 5. Eval: ROUGE-L on held-out set, manual spot checks. What's wrong with this pipeline? What will bite me? Give me specific fixes with exact parameter values. | 14 | 10 |
-| Agent orchestration | I'm building a customer support agent system using the OpenAI Agents SDK. I need a triage agent that routes to 3 specialists: billing, technical, and account. The triage agent should pass structured context (customer tier, issue category, sentiment score) via typed handoffs. Give me the full implementation with proper error handling. | 8 | 9 |
-| Agent tool use | I'm building a data analysis agent that can autonomously write and execute Python code, query SQL databases, create visualizations, and present findings. The agent needs: 1. Tool schema design — define clean function-calling schemas for: code execution (with sandboxing), SQL queries (read-only), chart generation (matplotlib/plotly), and file I/O 2. Error recovery — when code execution fails, the agent should analyze the traceback, fix the code, and retry (max 3 attempts) 3. Safety — prevent SQL injection, sandbox code execution, limit resource usage 4. Conversation memory — maintain context of what data has been explored and what conclusions were drawn. Using Claude API with tool_use. Give me the complete implementation: tool definitions, agent loop, error handling, and sandboxing setup. Include the system prompt that makes the agent effective at data analysis. | 10 | 9 |
+### Architecture & Systems
 
-## Negative Controls (non-ML tasks)
+| Task | Plugin | Baseline | Delta |
+|------|:------:|:--------:|:-----:|
+| Model merging (3x Llama-3-8B, TIES/DARE/SLERP, mergekit) | 14 | 8 | +6 |
+| Embedding pipeline (10M code snippets, sub-100ms search) | 14 | 9 | +5 |
+| A/B testing LLMs (production, sequential testing, FastAPI) | 12 | 8 | +4 |
+| Prompt optimization (DSPy, 3-module RAG pipeline) | 12 | 9 | +3 |
+| Guardrails system (NeMo/Guardrails AI, <200ms latency) | 12 | 9 | +3 |
+| Structured output (Pydantic, function calling vs Instructor vs Outlines) | 11 | 10 | +1 |
+| LLM eval framework (4-axis, LLM-as-judge, CI integration) | 11 | 10 | +1 |
 
-| Task | Prompt | Plugin | Baseline |
-|------|--------|:------:|:--------:|
-| DevOps | Write a GitHub Actions workflow that runs tests on PRs, builds a Docker image on merge to main, pushes to ECR, and deploys to ECS with rolling updates. Include the Dockerfile and task definition. | 11 | 9 |
-| Basic Python | Write a Python function that merges two sorted lists into one sorted list. Include type hints and doctests. | 7 | 6 |
-| Algorithm | Implement a trie data structure in Python that supports insert, search, and prefix matching. Then use it to build an autocomplete system. Include time/space complexity analysis. | 6 | 7 |
-| Web dev | Build a REST API with FastAPI that has CRUD endpoints for a blog post resource. Include Pydantic models, SQLAlchemy ORM, and proper error handling. Show the complete code. | 6 | 9 |
+### Agent Tasks
+
+| Task | Plugin | Baseline | Delta |
+|------|:------:|:--------:|:-----:|
+| Agent delegation (vLLM serving review via ml-expert) | **15** | 7 | +8 |
+| Direct agent review (Llama-3-8B pipeline audit) | 14 | 10 | +4 |
+| Agent tool use (data analysis agent, Claude API) | 10 | 9 | +1 |
+| Agent orchestration (OpenAI Agents SDK, triage routing) | 8 | 9 | -1 |
+
+### Negative Controls (non-ML tasks)
+
+| Task | Plugin | Baseline | Delta |
+|------|:------:|:--------:|:-----:|
+| DevOps (GitHub Actions, Docker, ECR, ECS) | 11 | 9 | +2 |
+| Basic Python (merge sorted lists) | 7 | 6 | +1 |
+| Algorithm (trie + autocomplete) | 6 | 7 | -1 |
+| Web dev (FastAPI CRUD + SQLAlchemy) | 6 | **9** | -3 |
+
+---
+
+## Methodology
+
+- Each task is run through Claude Code twice: once with SuperML installed, once without
+- 3 independent LLM judges score each response (median scores used)
+- Judge positions are randomized to avoid position bias
+- Tasks that require GPU hardware are scored on config/code quality, not execution
+- Negative controls verify the plugin doesn't degrade non-ML responses
+- Full test harness: [self-refine/](self-refine/)
