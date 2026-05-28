@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # superml - ML engineering CLI
-# Usage: superml <skill> <task> [--model haiku|sonnet|opus] [--ground]
+# Usage: superml <skill> <task> [--model haiku|sonnet|opus] [--ground] [--no-log]
 set -euo pipefail
 
 SUPERML_DIR="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")" && pwd)"
@@ -12,6 +12,7 @@ unset ANTHROPIC_API_KEY
 # Defaults
 MODEL="${SUPERML_MODEL:-haiku}"
 GROUND=false
+NO_LOG=false
 SKILL=""
 TASK_PARTS=()
 
@@ -20,6 +21,7 @@ while [[ $# -gt 0 ]]; do
     case "$1" in
         --model|-m)  MODEL="$2"; shift 2 ;;
         --ground|-g) GROUND=true; shift ;;
+        --no-log)    NO_LOG=true; shift ;;
         -*)          echo "Unknown flag: $1" >&2; exit 1 ;;
         *)
             if [[ -z "$SKILL" ]]; then
@@ -39,7 +41,7 @@ if [[ -z "$SKILL" || -z "$TASK" ]]; then
 superml - ML engineering CLI
 
 Usage:
-  superml <skill> <task> [--model haiku|sonnet|opus] [--ground]
+  superml <skill> <task> [--model haiku|sonnet|opus] [--ground] [--no-log]
 
 Skills:
   plan        Plan an ML implementation
@@ -50,8 +52,9 @@ Skills:
   experiment  Design a reproducible experiment
 
 Flags:
-  --ground, -g          Fetch official docs before responding (slower, cites sources)
-  --model, -m <model>   Model to use: haiku (default), sonnet, opus
+  --ground, -g    Fetch official docs before responding (slower, cites sources)
+  --model, -m     Model: haiku (default), sonnet, opus
+  --no-log        Skip writing to experiments/journal.md this call
 
 Examples:
   superml plan "fine-tune Llama 3.1 8B with QLoRA on 1xA100"
@@ -63,7 +66,7 @@ Examples:
   superml experiment "compare LoRA rank 8 vs 16 on MMLU 5-shot"
 
 Env:
-  SUPERML_MODEL=haiku|sonnet|opus   override default model
+  SUPERML_MODEL=haiku|sonnet|opus   override default model (default: haiku)
 EOF
     exit 1
 fi
@@ -74,13 +77,63 @@ if [[ ! -f "$SKILL_FILE" ]]; then
     exit 1
 fi
 
+# Build system prompt
 SYSTEM_PROMPT="$(cat "$SKILL_FILE")"
 if [[ "$GROUND" == "true" ]]; then
     SYSTEM_PROMPT="${SYSTEM_PROMPT}$(cat "${SUPERML_DIR}/grounding.md")"
 fi
 
-exec claude -p \
+# Inject persistent project context (bash reads files — automatic, no Claude instruction needed)
+CONTEXT=""
+if [[ -f "./MEMORY.md" ]]; then
+    CONTEXT="${CONTEXT}
+## Hardware & Setup (MEMORY.md)
+$(cat ./MEMORY.md)
+"
+fi
+if [[ -f "./experiments/lessons.md" ]]; then
+    CONTEXT="${CONTEXT}
+## Hard-won Rules (experiments/lessons.md)
+$(cat ./experiments/lessons.md)
+"
+fi
+if [[ -f "./experiments/journal.md" ]]; then
+    CONTEXT="${CONTEXT}
+## Recent Experiments (experiments/journal.md — last 150 lines)
+$(tail -150 ./experiments/journal.md)
+"
+fi
+
+if [[ -n "$CONTEXT" ]]; then
+    SYSTEM_PROMPT="${SYSTEM_PROMPT}
+
+---
+## Project Context
+
+${CONTEXT}"
+fi
+
+# Run claude, stream to terminal, capture output for journal
+RESPONSE_FILE="$(mktemp)"
+set +e
+claude -p \
     --settings "${SUPERML_DIR}/settings.json" \
     --system-prompt "$SYSTEM_PROMPT" \
     --model "$MODEL" \
-    "$TASK"
+    "$TASK" | tee "$RESPONSE_FILE"
+EXIT_CODE="${PIPESTATUS[0]}"
+set -e
+
+# Append to journal on success (bash writes — automatic regardless of skill used)
+if [[ "$NO_LOG" == "false" && "$EXIT_CODE" -eq 0 ]]; then
+    mkdir -p ./experiments
+    {
+        printf '\n### %s — %s\n' "$(date '+%Y-%m-%d %H:%M')" "$SKILL"
+        printf '**Task**: %s\n\n' "$TASK"
+        cat "$RESPONSE_FILE"
+        printf '\n\n---\n'
+    } >> "./experiments/journal.md"
+fi
+
+rm -f "$RESPONSE_FILE"
+exit "$EXIT_CODE"
