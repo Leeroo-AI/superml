@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # superml - ML engineering CLI
-# Usage: superml <skill> <task> [--model haiku|sonnet|opus]
+# Usage: superml <skill> <task> [--model haiku|sonnet|opus] [--ground]
 set -euo pipefail
 
 SUPERML_DIR="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")" && pwd)"
@@ -11,14 +11,16 @@ unset ANTHROPIC_API_KEY
 
 # Defaults
 MODEL="${SUPERML_MODEL:-haiku}"
+GROUND=false
 SKILL=""
 TASK_PARTS=()
 
 # Parse args
 while [[ $# -gt 0 ]]; do
     case "$1" in
-        --model|-m) MODEL="$2"; shift 2 ;;
-        -*)         echo "Unknown flag: $1" >&2; exit 1 ;;
+        --model|-m)  MODEL="$2"; shift 2 ;;
+        --ground|-g) GROUND=true; shift ;;
+        -*)          echo "Unknown flag: $1" >&2; exit 1 ;;
         *)
             if [[ -z "$SKILL" ]]; then
                 SKILL="$1"
@@ -34,10 +36,10 @@ TASK="${TASK_PARTS[*]:-}"
 
 if [[ -z "$SKILL" || -z "$TASK" ]]; then
     cat >&2 <<'EOF'
-superml - ML engineering CLI (fast, low-token)
+superml - ML engineering CLI
 
 Usage:
-  superml <skill> <task> [--model haiku|sonnet|opus]
+  superml <skill> <task> [--model haiku|sonnet|opus] [--ground]
 
 Skills:
   plan        Plan an ML implementation
@@ -47,16 +49,21 @@ Skills:
   iterate     Get ranked next steps after an experiment
   experiment  Design a reproducible experiment
 
+Flags:
+  --ground, -g          Fetch official docs before responding (slower, cites sources)
+  --model, -m <model>   Model to use: haiku (default), sonnet, opus
+
 Examples:
   superml plan "fine-tune Llama 3.1 8B with QLoRA on 1xA100"
+  superml plan --ground "fine-tune Llama 3.1 8B with QLoRA on 1xA100"
   superml debug "CUDA OOM during forward pass, batch_size=4, 80GB GPU"
-  superml research "how does vLLM chunked prefill work"
+  superml research --ground "how does vLLM chunked prefill work"
   superml verify "$(cat train_config.yaml)"
   superml iterate "tried rank-8 LoRA, loss 0.35, not converging after 2k steps"
   superml experiment "compare LoRA rank 8 vs 16 on MMLU 5-shot"
 
 Env:
-  SUPERML_MODEL=haiku|sonnet|opus   override default model (default: haiku)
+  SUPERML_MODEL=haiku|sonnet|opus   override default model
 EOF
     exit 1
 fi
@@ -67,8 +74,13 @@ if [[ ! -f "$SKILL_FILE" ]]; then
     exit 1
 fi
 
+SYSTEM_PROMPT="$(cat "$SKILL_FILE")"
+if [[ "$GROUND" == "true" ]]; then
+    SYSTEM_PROMPT="${SYSTEM_PROMPT}$(cat "${SUPERML_DIR}/grounding.md")"
+fi
+
 exec claude -p \
     --settings "${SUPERML_DIR}/settings.json" \
-    --system-prompt "$(cat "$SKILL_FILE")" \
+    --system-prompt "$SYSTEM_PROMPT" \
     --model "$MODEL" \
     "$TASK"
