@@ -1,0 +1,74 @@
+#!/usr/bin/env bash
+# superml - ML engineering CLI
+# Usage: superml <skill> <task> [--model haiku|sonnet|opus]
+set -euo pipefail
+
+SUPERML_DIR="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")" && pwd)"
+SKILLS_DIR="${SUPERML_DIR}/skills"
+
+# Use OAuth (claude.ai subscription) instead of API key billing
+unset ANTHROPIC_API_KEY
+
+# Defaults
+MODEL="${SUPERML_MODEL:-haiku}"
+SKILL=""
+TASK_PARTS=()
+
+# Parse args
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --model|-m) MODEL="$2"; shift 2 ;;
+        -*)         echo "Unknown flag: $1" >&2; exit 1 ;;
+        *)
+            if [[ -z "$SKILL" ]]; then
+                SKILL="$1"
+            else
+                TASK_PARTS+=("$1")
+            fi
+            shift
+            ;;
+    esac
+done
+
+TASK="${TASK_PARTS[*]:-}"
+
+if [[ -z "$SKILL" || -z "$TASK" ]]; then
+    cat >&2 <<'EOF'
+superml - ML engineering CLI (fast, low-token)
+
+Usage:
+  superml <skill> <task> [--model haiku|sonnet|opus]
+
+Skills:
+  plan        Plan an ML implementation
+  debug       Debug an ML failure (OOM, NaN, crash, slow throughput)
+  research    Research a framework or technique
+  verify      Verify code/config for bugs and deprecated APIs
+  iterate     Get ranked next steps after an experiment
+  experiment  Design a reproducible experiment
+
+Examples:
+  superml plan "fine-tune Llama 3.1 8B with QLoRA on 1xA100"
+  superml debug "CUDA OOM during forward pass, batch_size=4, 80GB GPU"
+  superml research "how does vLLM chunked prefill work"
+  superml verify "$(cat train_config.yaml)"
+  superml iterate "tried rank-8 LoRA, loss 0.35, not converging after 2k steps"
+  superml experiment "compare LoRA rank 8 vs 16 on MMLU 5-shot"
+
+Env:
+  SUPERML_MODEL=haiku|sonnet|opus   override default model (default: haiku)
+EOF
+    exit 1
+fi
+
+SKILL_FILE="${SKILLS_DIR}/${SKILL}.md"
+if [[ ! -f "$SKILL_FILE" ]]; then
+    echo "Unknown skill '${SKILL}'. Available: plan debug research verify iterate experiment" >&2
+    exit 1
+fi
+
+exec claude -p \
+    --settings "${SUPERML_DIR}/settings.json" \
+    --system-prompt "$(cat "$SKILL_FILE")" \
+    --model "$MODEL" \
+    "$TASK"
